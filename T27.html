@@ -2089,7 +2089,7 @@ function travelScript(){ return [
   ]}},
   {chars:[{who:'sg',e:'smile',x:50}],who:'sg',text:'우리는 낙동강에서만 싸우지 않고, 배를 타고 멀리 <b>인천</b> 바다로 올라가 상륙하기로 했어요.'},
   {choice:{topic:'인천 상륙 작전',ask:'국군과 국제 연합군이 낙동강에서 먼 인천으로 상륙한 까닭은 무엇일까?',text:true,opts:[
-    {label:'서울과 가까운 곳에 내려 서울을 빨리 되찾으려고',good:true,camp:'incheon',then:[{chars:[{who:'sg',e:'smile',x:50}],who:'sg',text:'맞아요! <b>인천 상륙 작전</b>에 성공해 서울을 되찾고, 38도선을 넘어 압록강 부근까지 나아갔어요.'},...SHOW('r_incheon','인천으로 향하는 상륙정(1950년 9월 15일)','이 작전으로 서울을 되찾았어.','sol'),RELIC('incheon')]},
+    {label:'서울을 빨리 되찾고, 낙동강까지 내려온 북한군의 뒤쪽을 끊으려고',good:true,camp:'incheon',then:[{chars:[{who:'sg',e:'smile',x:50}],who:'sg',text:'맞아요! 북한군은 앞뒤로 갇혀 무기와 식량을 받을 길이 끊겼어요.'},{chars:[{who:'sg',e:'smile',x:50}],who:'sg',text:'그렇게 <b>인천 상륙 작전</b>에 성공해 서울을 되찾고, 38도선을 넘어 압록강 부근까지 나아갔어요.'},...SHOW('r_incheon','인천으로 향하는 상륙정(1950년 9월 15일)','이 작전으로 서울을 되찾았어.','sol'),RELIC('incheon')]},
     {label:'인천에서 피란민을 배에 태워 남쪽으로 보내려고',good:false,then:[...WRONG('sg','피란민을 태운 건 나중의 흥남 철수 작전이에요. 인천은 어느 도시와 가까운지 지도를 떠올려 봐요.')]},
     {label:'낙동강에서 싸우기 싫어 바다로 놀러 가려고',good:false,then:[...WRONG('sg','놀러 간 게 아니에요. 인천 가까이에 어떤 도시가 있는지 생각해 봐요.')]},
   ]}},
