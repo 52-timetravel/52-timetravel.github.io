@@ -1894,7 +1894,7 @@ function orderGame(o){ return Object.assign((done)=>{
   const draw=()=>{
     ui.innerHTML=`<div class="steps">${ST.map((s,j)=>`<i class="${j<k?'done':''}">${j+1}. ${j<k?s.label:'?'}</i>`).join('')}</div><div class="ask" style="top:22%">${o.ask}</div>`;
     window.__tbA=k; const box=document.createElement('div'); box.className='ordbox'+(ST.length===4?' four':'');
-    box.innerHTML=shown.map(j=>`<button class="opt ${j<k?'right':''}" type="button" data-j="${j}" ${j<k?'disabled':''}>${pbox(ST[j])}<span>${j<k?ST[j].label:'?'}</span></button>`).join('');
+    box.innerHTML=shown.map(j=>`<button class="opt ${j<k?'right':''}" type="button" data-j="${j}" ${j<k?'disabled':''}>${pbox(ST[j])}<span>${(j<k||o.showLabels)?ST[j].label:'?'}</span></button>`).join('');
     ui.appendChild(box);
     box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const j=+b.dataset.j;
       if(j===k){k++; toast(ST[j].label); if(k>=ST.length){ui.innerHTML='';award(once('order:'+o.key)?(miss?PT.retry:PT.craft):0,o.ok||'순서 완성!',false,true,done);} else draw();}
@@ -2062,10 +2062,10 @@ function travelScript(){ return [
   ]}},
   /* 분단 */
   {bg:'dmz',chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:'전쟁이 끝난 뒤에도 남한과 북한은 서로를 적으로 여기는 감정이 깊어졌고, 군사적으로 대립하기도 했어.'},
-  {choice:{topic:'분단의 영향',ask:'전쟁 이후 분단 상황은 어떻게 이어지고 있을까?',text:true,opts:[
-    {label:'오늘날까지 분단 상황이 이어지고 있다',good:true,camp:'bundan',then:[{chars:[{who:'sol',e:'normal',x:50}],who:'sol',text:'그래. 휴전선이 남과 북을 나누고 있어.'},...SHOW('r_bundan','휴전선 남쪽 철책(1968년)','분단은 지금도 이어지고 있어.','sol'),RELIC('bundan')]},
-    {label:'전쟁 직후 곧바로 통일됐다',good:false,then:[...WRONG('sol','아직 통일되지 않았어.')]},
-    {label:'분단은 하루 만에 사라졌다',good:false,then:[...WRONG('sol','분단은 오래 이어지고 있어.')]},
+  {choice:{topic:'분단의 영향',ask:'전쟁 뒤 남한과 북한이 서로를 적으로 여기는 감정이 깊어진 까닭은 무엇일까?',text:true,opts:[
+    {label:'같은 민족끼리 싸우며 서로 큰 피해와 상처를 입었기 때문에',good:true,camp:'bundan',then:[{chars:[{who:'sol',e:'normal',x:50}],who:'sol',text:'그래. 그 상처 때문에 대립이 이어졌고, 오늘날까지 <b>분단</b> 상황이 이어지고 있어. 휴전선이 남과 북을 나누고 있지.'},...SHOW('r_bundan','휴전선 남쪽 철책(1968년)','분단은 지금도 이어지고 있어.','sol'),RELIC('bundan')]},
+    {label:'전쟁 중에 서로 많이 도와주었기 때문에',good:false,then:[...WRONG('sol','서로 도왔다면 사이가 좋아졌겠지? 전쟁에서 어떤 일이 있었는지 떠올려 봐.')]},
+    {label:'서로 한 번도 만난 적이 없어서',good:false,then:[...WRONG('sol','남과 북은 원래 같은 민족이었어. 전쟁이 남긴 것을 생각해 봐.')]},
   ]}},
   {choice:{topic:'이산가족의 아픔',ask:'이산가족의 아픔이 오늘날까지 이어지는 까닭은 무엇일까?',text:true,opts:[
     {label:'분단이 이어져 가족을 쉽게 만날 수 없기 때문에',good:true,then:[{chars:[{who:'sol',e:'normal',x:50}],who:'sol',text:'맞아. 분단 때문에 오랫동안 그리움이 이어졌어.'}]},

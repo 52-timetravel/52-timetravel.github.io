@@ -1999,7 +1999,7 @@ function recap(done){
     <div class="g">${rg('r_incheon','incheon','인천 상륙 작전')}<b>인천 상륙 작전</b><span>국군과 국제 연합군<br>서울을 되찾고<br>압록강 부근까지 진출</span></div>
     <div class="g">${rg('r_jeongjeon','jeongjeon','정전 협정')}<b>정전 협정</b><span>1953년 7월<br>휴전선이 설정됨</span></div>
     <div class="g">${rg('r_cheonmak','cheonmak','천막 학교')}<b>천막 학교</b><span>피란 중에도<br>배움의 뜻을 이어 감</span></div>
-    <div class="g">${rg('r_heungnam','heungnam','흥남 철수 작전')}<b>흥남 철수 작전</b><span>크리스마스의 기적<br>피란민 1만 4천 명을 구함</span></div>
+    <div class="g">${rg('r_heungnam','heungnam','흥남 철수 작전')}<b>흥남 철수 작전</b><span>크리스마스의 기적<br>배 한 척에 피란민<br>1만 4천 명이 탐</span></div>
     <div class="g">${rg('r_milmyeon','milmyeon','밀면')}<b>밀면</b><span>고향이 그리운<br>피란민이 만든 음식</span></div>
    </div>
    <div class="row"><span style="font-size:1.9cqw"><b style="color:var(--ochre-deep)">여행 일지를 잘 기억해 두세요!</b> 수업 뒤 귀환 퀴즈에 나와요.</span><button class="big dark" id="go" type="button">시간 여행 마치기</button></div></div>`;
@@ -2048,7 +2048,7 @@ const REFUGE={key:'refuge',bg:'busan',title:'부산 피란민 마을 둘러보�
   {id:'house',x:30,y:56,who:'sol',t:'산등성이에 움막과 판자로 지은 집들이야. 전국에서 모인 피란민들이 살았어.'},
   {id:'water',x:72,y:78,who:'sol',t:'마실 물을 얻으려고 길게 줄을 서 있어. 물과 음식이 부족해서 힘들게 살았지.'},
   {id:'tent',x:52,y:44,who:'sol',t:'저건 천막 학교야. 임시로 만든 학교에서도 공부를 이어 갔지.'},
-  {id:'child',x:18,y:80,who:'sol',t:'가족과 헤어진 아이도 많았어. 부산은 당시 임시 수도였어.'},
+  {id:'child',x:18,y:80,who:'sol',t:'가족과 헤어진 아이도 많았어. 이렇게 힘든 곳이었지만, 부산은 전쟁 동안 나라의 <b>임시 수도</b>였어.'},
 ]};
 
 LESSON.relics={title:'6·25 전쟁',items:{
@@ -2064,37 +2064,43 @@ function travelScript(){ return [
   titleScreen('6·25 전쟁','146~150'),
   {custom:askName},
   {bg:'void',text:'시간이 거꾸로 흐른다… 2026년… 그리고 <b>1950년 6월 25일</b>, 새벽.'},
-  {bg:'war38',chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:`${PN()}, 조심해. 여기는 38도선 근처야. 남과 북에 서로 다른 정부가 세워진 뒤, 북한은 소련의 지원을 받으며 군사력을 키웠어. 한반도를 무력으로 통일하려고 했지.`},
-  {choice:{topic:'6·25 전쟁의 시작',ask:'1950년 6월 25일 새벽, 38도선에서 무슨 일이 일어났을까?',text:true,opts:[
-    {label:'북한군이 기습적으로 38도선을 넘어 남한으로 쳐들어왔다',good:true,camp:'namchim',then:[{chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:'맞아. 그렇게 <b>6·25 전쟁</b>이 시작됐어.'},...SHOW('r_namchim','서울 거리에 들어온 북한군 전차 부대','북한군은 3일 만에 서울을 함락했어.','sol'),RELIC('namchim')]},
-    {label:'남한과 북한이 38도선에서 평화 회담을 열었다',good:false,then:[...WRONG('sol','회담이 아니야. 새벽에 갑자기 일어난 일이야.')]},
-    {label:'일본군이 38도선을 넘어 쳐들어왔다',good:false,then:[...WRONG('sol','일본군이 아니야. 같은 민족끼리 벌어진 전쟁이었어.')]},
+  {bg:'war38',chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:`${PN()}, 조심해. 여기는 38도선 근처야. 남과 북에 서로 다른 정부가 세워진 뒤, 북한은 소련의 지원을 받으며 군사력을 키웠어.`},
+  {chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:'그리고 오늘 새벽, 북한군이 기습적으로 <b>38도선을 넘어</b> 남한으로 쳐들어왔어! <b>6·25 전쟁</b>이 시작된 거야.'},
+  {choice:{topic:'6·25 전쟁의 시작',ask:'북한은 왜 군사력을 키워 남한으로 쳐들어왔을까?',text:true,opts:[
+    {label:'한반도를 무력으로 통일하려고',good:true,camp:'namchim',then:[{chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:'맞아. 전쟁을 일으켜 한반도 전체를 차지하려고 한 거야.'},...SHOW('r_namchim','서울 거리에 들어온 북한군 전차 부대','북한군은 3일 만에 서울을 함락했어.','sol'),RELIC('namchim')]},
+    {label:'남한과 평화 회담을 하려고',good:false,then:[...WRONG('sol','회담을 하려면 군대를 앞세울 필요가 없었겠지? 북한이 무엇을 바랐을지 생각해 봐.')]},
+    {label:'남아 있던 일본군을 몰아내려고',good:false,then:[...WRONG('sol','일본군은 1945년 광복 때 이미 물러났어. 북한이 한반도를 어떻게 하려고 했을까?')]},
   ]}},
   /* 피란 */
   {bg:'refuge',chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:'전쟁이 시작되고 3일 만에 서울이 함락됐어. 많은 사람이 짐을 지고 피란길에 올랐어. 국군은 맞서 싸웠지만 낙동강 이남까지 후퇴해야 했어.'},
   {card:{icon:'pirannin',title:'피란',text:'전쟁을 피해 안전한 곳으로 옮겨 가는 것이에요.',tag:'낱말 풀이'}},
-  {choice:{topic:'피란',ask:'서울이 함락되자 많은 사람이 한 일은 무엇일까?',text:true,opts:[
-    {label:'짐을 지고 피란길에 올랐다',good:true,then:[{chars:[{who:'sol',e:'normal',x:50}],who:'sol',text:'그래, 모두 살길을 찾아 남쪽으로 떠났어.'}]},
-    {label:'모두 서울에 그대로 남아 평소처럼 지냈다',good:false,then:[...WRONG('sol','전쟁 중인데 평소처럼 지낼 수 있었을까?')]},
-    {label:'모두 일본으로 이사를 갔다',good:false,then:[...WRONG('sol','일본이 아니라 남쪽 지방으로 갔어.')]},
+  {choice:{topic:'피란',ask:'많은 사람이 집을 두고 짐을 진 채 남쪽으로 피란을 떠난 까닭은 무엇일까?',text:true,opts:[
+    {label:'전쟁을 피해 안전한 곳에서 목숨을 지키려고',good:true,then:[{chars:[{who:'sol',e:'normal',x:50}],who:'sol',text:'그래. 모두 살길을 찾아 남쪽으로 떠났어.'}]},
+    {label:'남쪽에 있는 새 학교에 다니려고',good:false,then:[...WRONG('sol','학교 때문이 아니야. 3일 만에 서울이 함락됐다는 것을 떠올려 봐.')]},
+    {label:'남쪽 바다를 구경하려고',good:false,then:[...WRONG('sol','구경이 아니야. 전쟁이 벌어지는 곳에 그대로 있으면 어떻게 될까?')]},
   ]}},
   /* 국제 연합군 */
-  {bg:'incheon',chars:[{who:'sg',e:'normal',x:50}],who:'sg',text:'나는 국군 병사요. 낙동강 이남까지 밀렸지만 포기하지 않았소. 곧 국제 연합군이 도와주러 왔소!'},
+  {bg:'incheon',chars:[{who:'sg',e:'normal',x:50}],who:'sg',text:'저는 국군 병사예요. 낙동강 이남까지 밀렸지만 포기하지 않았어요. 곧 국제 연합군이 도와주러 왔어요!'},
   {card:{icon:'unflag',title:'국제 연합(UN)',text:'세계 평화를 지키려고 만든 국제 기구예요. 6·25 전쟁 때 16개 나라가 참여한 국제 연합군을 보냈어요.',tag:'낱말 풀이'}},
   {choice:{topic:'국제 연합군',ask:'국제 연합이 우리나라에 군대를 보낸 까닭은 무엇일까?',text:true,opts:[
     {label:'북한이 남한을 침략한 것을 불법적 행위라고 판단했기 때문에',good:true,then:[{chars:[{who:'sol',e:'smile',x:50}],who:'sol',text:'맞아. 16개 나라가 군대와 물자를 보냈어.'}]},
-    {label:'남한이 먼저 전쟁을 시작했기 때문에',good:false,then:[...WRONG('sg','아니오! 먼저 쳐들어온 쪽이 있었소.')]},
-    {label:'전쟁에 관심이 없어서 구경하려고',good:false,then:[...WRONG('sg','구경하러 온 게 아니오. 불법적 행위에 맞서려 한 것이오.')]},
+    {label:'남한이 먼저 전쟁을 시작했기 때문에',good:false,then:[...WRONG('sg','아니에요! 먼저 쳐들어온 쪽이 있었어요.')]},
+    {label:'전쟁에 관심이 없어서 구경하려고',good:false,then:[...WRONG('sg','구경하러 온 게 아니에요. 누가 먼저 쳐들어왔는지 생각해 봐요.')]},
   ]}},
-  {chars:[{who:'sg',e:'smile',x:50}],who:'sg',text:'국군과 국제 연합군은 <b>인천 상륙 작전</b>에 성공해 서울을 되찾았소. 38도선을 넘어 압록강 부근까지 나아갔지.'},
-  {choice:{topic:'인천 상륙 작전',ask:'국군과 국제 연합군이 서울을 되찾는 데 성공한 작전은 무엇일까?',text:true,opts:[
-    {label:'인천 상륙 작전',good:true,camp:'incheon',then:[{chars:[{who:'sg',e:'smile',x:50}],who:'sg',text:'그렇소! 인천으로 상륙해 서울을 되찾았소.'},...SHOW('r_incheon','인천으로 향하는 상륙정(1950년 9월 15일)','이 작전으로 서울을 되찾았어.','sol'),RELIC('incheon')]},
-    {label:'흥남 철수 작전',good:false,then:[...WRONG('sg','흥남 철수는 피란민을 구한 작전이오. 서울을 되찾은 건 다른 작전이오.')]},
-    {label:'고지 쟁탈 작전',good:false,then:[...WRONG('sg','다시 생각해 보시오. 바다로 상륙한 작전이오.')]},
+  {chars:[{who:'sg',e:'smile',x:50}],who:'sg',text:'우리는 낙동강에서만 싸우지 않고, 배를 타고 멀리 <b>인천</b> 바다로 올라가 상륙하기로 했어요.'},
+  {choice:{topic:'인천 상륙 작전',ask:'국군과 국제 연합군이 낙동강에서 먼 인천으로 상륙한 까닭은 무엇일까?',text:true,opts:[
+    {label:'서울과 가까운 곳에 내려 서울을 빨리 되찾으려고',good:true,camp:'incheon',then:[{chars:[{who:'sg',e:'smile',x:50}],who:'sg',text:'맞아요! <b>인천 상륙 작전</b>에 성공해 서울을 되찾고, 38도선을 넘어 압록강 부근까지 나아갔어요.'},...SHOW('r_incheon','인천으로 향하는 상륙정(1950년 9월 15일)','이 작전으로 서울을 되찾았어.','sol'),RELIC('incheon')]},
+    {label:'인천에서 피란민을 배에 태워 남쪽으로 보내려고',good:false,then:[...WRONG('sg','피란민을 태운 건 나중의 흥남 철수 작전이에요. 인천은 어느 도시와 가까운지 지도를 떠올려 봐요.')]},
+    {label:'낙동강에서 싸우기 싫어 바다로 놀러 가려고',good:false,then:[...WRONG('sg','놀러 간 게 아니에요. 인천 가까이에 어떤 도시가 있는지 생각해 봐요.')]},
   ]}},
   /* 중국군 참전, 정전 */
   {bg:'refuge',chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:'그런데 중국군이 북한을 도우려고 참전했어. 국군과 국제 연합군은 또 서울을 빼앗기고 후퇴했고, 고향으로 돌아갔던 사람들도 다시 피란을 떠나야 했어.'},
   {chars:[{who:'sol',e:'normal',x:50}],who:'sol',text:'다시 맞서 싸워 서울을 되찾았지만, 38도선 부근에서 치열한 전투가 계속됐어. 한편에서는 전쟁을 멈추려는 회담이 열렸지.'},
+  {choice:{topic:'정전 협정',ask:'싸우던 양쪽이 전쟁을 멈추려는 회담을 연 까닭은 무엇일까?',text:true,opts:[
+    {label:'38도선 부근에서 밀고 밀리는 싸움이 계속되며 피해만 커졌기 때문에',good:true,then:[{chars:[{who:'sol',e:'worry',x:50}],who:'sol',text:'맞아. 어느 쪽도 쉽게 이기지 못한 채 사람들만 계속 다치고 죽었어.'}]},
+    {label:'한쪽이 이미 한반도 전체를 차지했기 때문에',good:false,then:[...WRONG('sol','그랬다면 회담이 필요 없었겠지? 38도선 부근의 싸움을 떠올려 봐.')]},
+    {label:'모두 전쟁을 잊어버렸기 때문에',good:false,then:[...WRONG('sol','전쟁을 잊을 수는 없었어. 싸움이 어떻게 이어졌는지 생각해 봐.')]},
+  ]}},
   {custom:orderGame(FLOW)},
   {bg:'panmun',chars:[{who:'sol',e:'normal',x:50}],who:'sol',text:'1953년 7월, 판문점에서 정전 협정이 체결됐어.'},
   {card:{icon:'jeongjeon',title:'정전',text:'전쟁 당사자 사이의 합의에 따라 일시적으로 전투를 중지하는 것이에요.',tag:'낱말 풀이'}},
@@ -2113,12 +2119,12 @@ function travelScript(){ return [
     {label:'전쟁이 이미 끝난 줄 알고',good:false,then:[...WRONG('sd','전쟁은 계속되고 있었어요.')]},
   ]}},
   /* 흥남 철수 */
-  {bg:'heungnam',chars:[{who:'cp',e:'normal',x:50}],who:'cp',text:'나는 메러디스 빅토리호의 선장이오. 1950년 12월, 흥남 부두에는 피란민 9만여 명이 모여 있었소.'},
+  {bg:'heungnam',chars:[{who:'cp',e:'normal',x:50}],who:'cp',text:'저는 메러디스 빅토리호의 선장 레너드 라루예요. 1950년 12월, 흥남 부두에는 피란을 가려는 사람들이 가득 모여 있었어요.'},
   {card:{icon:'news',title:'크리스마스의 기적',text:'메러디스 빅토리호는 원래 화물을 싣는 배로, 59명이 탈 수 있게 만들어졌다. 하지만 군수 물자를 버리고 피란민 1만 4천 명을 태워 부산항을 거쳐 거제도에 도착했다. 배 안에서 신생아 5명이 태어났다.',tag:'신문 기사 요약'}},
   {choice:{topic:'흥남 철수 작전',ask:'이 작전이 ‘크리스마스의 기적’이라고 불리는 까닭은 무엇일까?',text:true,opts:[
-    {label:'원래 59명이 탈 수 있는 배에 1만 4천 명이 타서 모두 무사히 내렸기 때문에',good:true,camp:'heungnam',then:[{chars:[{who:'cp',e:'smile',x:50}],who:'cp',text:'그렇소. 모두 무사히 내려 큰 기쁨이었소.'},...SHOW('r_heungnam','메러디스 빅토리호에 탄 피란민들','배에는 피란민들이 가득 탔어.','sol'),RELIC('heungnam')]},
-    {label:'크리스마스에 선물을 나누어 주어서',good:false,then:[...WRONG('cp','선물이 아니오. 사람 수를 비교해 보시오.')]},
-    {label:'배가 하늘을 날아서',good:false,then:[...WRONG('cp','배가 하늘을 날 수는 없소! 정원과 실제로 탄 인원을 비교해 보시오.')]},
+    {label:'원래 59명이 탈 수 있는 배에 1만 4천 명이 타서 모두 무사히 내렸기 때문에',good:true,camp:'heungnam',then:[{chars:[{who:'cp',e:'smile',x:50}],who:'cp',text:'맞아요. 한 사람도 잃지 않고 모두 무사히 내렸어요.'},...SHOW('r_heungnam','메러디스 빅토리호에 탄 피란민들','배에는 피란민들이 가득 탔어.','sol'),RELIC('heungnam')]},
+    {label:'크리스마스에 선물을 나누어 주어서',good:false,then:[...WRONG('cp','선물이 아니에요. 배에 탈 수 있는 사람 수와 실제로 탄 사람 수를 비교해 봐요.')]},
+    {label:'배가 하늘을 날아서',good:false,then:[...WRONG('cp','배가 하늘을 날 수는 없어요! 탈 수 있는 사람 수와 실제로 탄 사람 수를 비교해 봐요.')]},
   ]}},
   /* 밀면 */
   {bg:'busan',chars:[{who:'mm',e:'smile',x:50}],who:'mm',text:'흥남에서 내려와 부산에서 냉면집을 열었어요. 고향에서 하던 대로 면을 뽑으면 너무 비싸서 피란민들이 먹을 수 없었지요.'},
