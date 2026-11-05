@@ -502,6 +502,7 @@ const HASH = (()=>{ try{ return decodeURIComponent(location.hash.slice(1)); }cat
 const PARTS = HASH.split('~');
 const DEV = PARTS.includes('dev');
 const CLASSCODE = PARTS.find(p=>/^f[A-Za-z0-9_-]{20,}(\.\d+){5,7}$/.test(p))||'';
+const ROOMMODE = INHUB && PARTS.includes('room');   /* 2026-11-05 반 코드 방식: 목록 화면이 바로 보냄 */
 let MODE = PARTS.includes('quiz') ? 'quiz' : 'travel';
 const STAGE = ()=> MODE==='quiz' ? '귀환 퀴즈' : '시간 여행';
 
@@ -573,7 +574,7 @@ function formLink(vals){
 /* 끝 화면의 보내기 칸: 목록 화면 안이면 바깥(목록 화면)에서 보내기 창을 띄움 */
 function sendBox(el,info){
   if(!el) return;
-  if(!CLASSCODE){ el.innerHTML=`<div class="send-tip">선생님이 이 기기를 <b>우리 반에 연결</b>하면 여기서 점수를 보낼 수 있어요.</div>`; return; }
+  if(!CLASSCODE&&!ROOMMODE){ el.innerHTML=`<div class="send-tip">선생님이 이 기기를 <b>우리 반에 연결</b>하면 여기서 점수를 보낼 수 있어요.</div>`; return; }
   el.innerHTML=`<button class="big send-go" type="button" id="sendGo">선생님께 보내기 ▶</button>`;
   const open=()=>{ if(INHUB) window.parent.postMessage({hanguksa:'send',info:{...info,lesson:LESSON.name,ncol:CLASSCODE.split('.').length-1,player:(typeof playerLabel==='function'?playerLabel():'')}},'*'); else sendScreen(info); };
   el.querySelector('#sendGo').onclick=open;

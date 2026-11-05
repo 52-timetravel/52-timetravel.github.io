@@ -279,7 +279,7 @@ function draw(){
 let cur=0;
 function openLesson(i,mode){
   cur=i; const p=document.createElement('div'); p.className='player'; p.id='player';
-  const hs=[CODE,mode==='quiz'?'quiz':'',DEV?'dev':''].filter(Boolean).join('~'); p.innerHTML=`<iframe src="${READY[i]}${hs?'#'+hs:''}" title="${chLabel(i).full} ${T[i-1]}" allow="autoplay"></iframe>`;
+  const hs=[(typeof ROOM!=='undefined'&&ROOM)?'room':CODE,mode==='quiz'?'quiz':'',DEV?'dev':''].filter(Boolean).join('~'); p.innerHTML=`<iframe src="${READY[i]}${hs?'#'+hs:''}" title="${chLabel(i).full} ${T[i-1]}" allow="autoplay"></iframe>`;
   document.body.appendChild(p); document.getElementById('home').hidden=true;
 }
 function closeLesson(){ const p=document.getElementById('player'); if(p) p.remove(); document.getElementById('home').hidden=false; draw(); }
@@ -610,5 +610,287 @@ function joinClass(){ const v=document.getElementById('jin').value.trim(), m=doc
   CODE=c[0]; clsStore.set(CODE); draw(); }
 document.getElementById('jbtn').onclick=joinClass;
 document.getElementById('jin').addEventListener('keydown',e=>{ if(e.key==='Enter') joinClass(); });
+/* ===== 반 코드 방식 (2026-11-05): 구글 시트·설문지 없이 '반 이름 + 반 코드(학생) / 비밀번호(선생님)'로 결과 모으기 =====
+   build_hub.py 여섯 번째 값(Firebase 웹 앱 설정 JSON)을 넣으면 켜짐. 없으면 이 블록은 아무 일도 하지 않음(예전 구글 시트 방식만).
+   서버(Firestore, 서울)에 저장: 반 이름, 비밀번호·반 코드의 암호값, 학생 '번호'·점수·처음 틀린 개념·다시 한 횟수(30일 뒤 지움)
+   저장하지 않음: 학생 이름, 궁금한 점(자유 입력), 기기 정보. 이름은 선생님이 넣은 명렬로 선생님 기기 안에서만 붙임.
+   보안 규칙: firebase/firestore.rules */
+const FBCFG=(()=>{ try{ const c=JSON.parse('{"apiKey":"AIzaSyCYxuQAFxjxQ9yGzH_9SN7KZuw6ZTPSq7k","authDomain":"timetravel-52.firebaseapp.com","projectId":"timetravel-52","storageBucket":"timetravel-52.firebasestorage.app","messagingSenderId":"195255206485","appId":"1:195255206485:web:3ff5ef5a54c897a2df0adc"}'); return c&&c.apiKey?c:null; }catch(e){ return null; } })();
+const RKEY=(typeof CH!=='undefined'?'hanguksa_tb_':'hanguksa_');
+const rStore={ get(k){ try{ return JSON.parse(localStorage.getItem(RKEY+k)||'null'); }catch(e){ return null; } }, set(k,v){ try{ v==null?localStorage.removeItem(RKEY+k):localStorage.setItem(RKEY+k,JSON.stringify(v)); }catch(e){} } };
+let ROOM=FBCFG?rStore.get('room'):null;   /* 학생 기기: {r,name,code} */
+let TEACH=FBCFG?rStore.get('teach'):null; /* 선생님 기기: {r,name,pwH} */
+if(FBCFG){
+const FBV='10.12.2';
+let _fb=null;
+function fbReady(){
+  if(_fb) return _fb;
+  _fb=new Promise((ok,no)=>{
+    const files=['firebase-app-compat.js','firebase-auth-compat.js','firebase-firestore-compat.js']; let i=0;
+    const go=()=>{ try{
+        if(!firebase.apps.length) firebase.initializeApp(FBCFG);
+        const db=firebase.firestore(), au=firebase.auth();
+        if(window.__FB_EMU__){ try{ db.useEmulator(window.__FB_EMU__,8080); au.useEmulator('http://'+window.__FB_EMU__+':9099'); }catch(_){} }
+        const un=au.onAuthStateChanged(u=>{ un();
+          const fin=x=>ok({db,uid:x.uid,FV:firebase.firestore.FieldValue,TS:firebase.firestore.Timestamp});
+          if(u) fin(u); else au.signInAnonymously().then(c=>fin(c.user),no); });
+      }catch(e){ no(e); } };
+    const next=()=>{ if(window.firebase&&firebase.firestore&&firebase.auth) return go(); if(i>=files.length) return go();
+      const s=document.createElement('script'); s.src=`https://www.gstatic.com/firebasejs/${FBV}/${files[i++]}`; s.onload=next; s.onerror=()=>no(new Error('net')); document.head.appendChild(s); };
+    next();
+  });
+  _fb.catch(()=>{ _fb=null; });
+  return _fb;
+}
+async function sha(s){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+const normName=s=>String(s||'').normalize('NFC').replace(/\s+/g,' ').trim().toLowerCase();
+const ridOf=async n=>(await sha('tt-room:'+normName(n))).slice(0,24);
+const codeH=(r,c)=>sha(r+':code:'+c), pwHash=(r,p)=>sha(r+':pw:'+p);
+const newCode=()=>{ const a=new Uint32Array(1); crypto.getRandomValues(a); return String(100000+a[0]%900000); };
+const netErr=e=>/net|offline|unavailable|Failed to fetch/i.test(String(e&&(e.code||e.message)||e))?'인터넷 연결을 확인해 주세요.':'';
+const b64u=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const ub64=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+const roomLink=(name,code)=>GAME_URL.replace(/#.*$/,'')+'#R.'+b64u(name)+'.'+code;
+
+/* 반 만들기 (선생님) */
+async function roomCreate(name,pw){
+  name=String(name||'').replace(/\s+/g,' ').trim();
+  if(name.length<2||name.length>30) throw {msg:'반 이름은 2~30자로 써 주세요.'};
+  if(String(pw||'').length<6) throw {msg:'비밀번호는 6자 이상으로 써 주세요.'};
+  const {db,uid,FV}=await fbReady(); const r=await ridOf(name); const ref=db.collection('rooms').doc(r);
+  if((await ref.get()).exists) throw {msg:'이미 있는 반 이름이에요. 다른 이름을 정해 주세요. (예: 하늘반2026)'};
+  const code=newCode(), p=await pwHash(r,pw), c=await codeH(r,code);
+  const b=db.batch();
+  b.set(ref,{name,at:FV.serverTimestamp(),owner:uid});
+  b.set(ref.collection('priv').doc('k'),{codeH:c,pwH:p,code});
+  b.set(ref.collection('teachers').doc(uid),{pwH:p,at:FV.serverTimestamp()});
+  await b.commit();
+  TEACH={r,name,pwH:p}; rStore.set('teach',TEACH); return {r,name,code};
+}
+/* 들어가기: 반 코드(숫자 6자리)면 학생, 아니면(또는 코드가 틀리면) 선생님 비밀번호로 확인 */
+async function roomEnter(name,secret,asTeacher){
+  secret=String(secret||'').trim();
+  const {db,uid,FV}=await fbReady(); const r=await ridOf(name); const ref=db.collection('rooms').doc(r);
+  const d=await ref.get(); if(!d.exists) throw {msg:'그런 이름의 반이 없어요. 반 이름을 다시 확인해 주세요.'};
+  const nm=d.data().name;
+  if(!asTeacher&&/^\d{6}$/.test(secret)){
+    try{ await ref.collection('members').doc(uid).set({codeH:await codeH(r,secret),at:FV.serverTimestamp()}); ROOM={r,name:nm,code:secret}; rStore.set('room',ROOM); return 'student'; }catch(e){}
+  }
+  try{ const p=await pwHash(r,secret); await ref.collection('teachers').doc(uid).set({pwH:p,at:FV.serverTimestamp()}); TEACH={r,name:nm,pwH:p}; rStore.set('teach',TEACH); return 'teacher'; }catch(e){}
+  throw {msg:asTeacher?'비밀번호가 맞지 않아요.':'반 코드나 비밀번호가 맞지 않아요.'};
+}
+/* 선생님 권한 확인(다른 기기·새 로그인이면 저장한 비밀번호 암호값으로 다시 등록) → 반 비밀 칸 */
+async function teachPriv(){
+  const {db,uid,FV}=await fbReady(); const ref=db.collection('rooms').doc(TEACH.r);
+  try{ return (await ref.collection('priv').doc('k').get()).data(); }
+  catch(e){ await ref.collection('teachers').doc(uid).set({pwH:TEACH.pwH,at:FV.serverTimestamp()}); return (await ref.collection('priv').doc('k').get()).data(); }
+}
+async function roomNewCode(){ const {db}=await fbReady(); const pv=await teachPriv(); const code=newCode();
+  await db.collection('rooms').doc(TEACH.r).collection('priv').doc('k').set({codeH:await codeH(TEACH.r,code),pwH:pv.pwH,code}); return code; }
+/* 학생 결과 보내기: 번호만 (이름·궁금한 점은 보내지 않음) */
+async function roomSend(info,num){
+  const {db,uid,FV,TS}=await fbReady(); const ref=db.collection('rooms').doc(ROOM.r);
+  const travel=info.kind==='travel', tb=(store.get()[cur]||{}).t;
+  const doc={n:cur, lesson:String(info.lesson||'').slice(0,80), stage:String(info.stage||'').slice(0,60), quiz:!travel,
+    t:travel?Number(info.sim)||0:(tb!==undefined?Number(tb):null), q:travel?null:Number(info.quiz)||0,
+    wrong:(info.wrong||[]).slice(0,40).map(s=>String(s).slice(0,160)), num, tries:+((String(info.stage).match(/(\d+)회/)||[0,0])[1]),
+    at:FV.serverTimestamp(), exp:TS.fromMillis(Date.now()+30*864e5), u:uid};
+  try{ await ref.collection('res').add(doc); return; }catch(e){ if(netErr(e)) throw {msg:netErr(e)}; }
+  try{ await ref.collection('members').doc(uid).set({codeH:await codeH(ROOM.r,ROOM.code),at:FV.serverTimestamp()}); }
+  catch(e){ if(netErr(e)) throw {msg:netErr(e)}; throw {msg:'반 코드가 바뀌었어요. 선생님께 새 반 코드를 받아 첫 화면에서 다시 들어가 주세요.',reset:true}; }
+  doc.at=FV.serverTimestamp(); await ref.collection('res').add(doc);
+}
+const numOf=p=>{ const m=String(p||'').match(/^\s*(\d{1,2})/); return m?+m[1]:0; };
+
+/* ----- 화면: 스타일 ----- */
+document.head.insertAdjacentHTML('beforeend',`<style>
+.join .rrow{display:flex;gap:8px;flex:1 1 420px;max-width:620px;flex-wrap:wrap}
+.join .rrow input{flex:1 1 150px;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink,#eee)}
+.join .rrow button,.join .jlink{font:inherit}
+.join .jlink{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;padding:0}
+.rbox{border:2px solid #2f6b4a;border-radius:14px;padding:14px 16px;background:#f2faf5;display:flex;flex-direction:column;gap:10px}
+.rbox h4{margin:0;font-size:17px}.rbox .rec{font-size:12px;background:#2f6b4a;color:#fff;border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:2px}
+.rbox .rf{display:flex;gap:8px;flex-wrap:wrap}.rbox .rf input{flex:1 1 160px;font:inherit;font-size:16px;padding:9px 11px;border-radius:9px;border:1px solid #b9c7bf}
+.rbox small{color:#4a5a52;line-height:1.55}.rbox .code{font-size:30px;font-weight:800;letter-spacing:4px;color:#1f4d35}
+.rbox .qr{width:150px;height:150px;background:#fff;border-radius:8px;padding:4px}.rbox .qr svg{width:100%;height:100%}
+.rbox .cols{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.gsep{margin:4px 0 -4px;font-size:15px;color:#5b5446}
+.rtop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.rtop .live{color:var(--ok,#4fbf7f);font-size:14px}
+.rtop .btns{display:flex;gap:8px;flex-wrap:wrap}
+.ana .rlog{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.ana .rlog input{flex:1 1 180px;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:inherit}
+.ana textarea.ros{min-height:180px}
+.rsent{font-size:44px;line-height:1}
+</style>`);
+
+/* ----- 첫 화면: 반 이름 + 코드로 들어가기 ----- */
+const join=document.getElementById('join');
+const joinOld=join.innerHTML;
+function joinRoomUI(){
+  join.innerHTML=`<div><b>🔗 우리 반 들어가기</b><small>선생님이 알려 준 <b>반 이름</b>과 <b>반 코드</b>(숫자 6자리)를 써요. 한 번만 하면 돼요.</small></div>
+    <div class="rrow"><input id="rjn" placeholder="반 이름" autocomplete="off" maxlength="30"><input id="rjc" placeholder="반 코드" inputmode="numeric" autocomplete="off" maxlength="40"><button id="rjb" class="tbtn" type="button">들어가기</button></div>
+    <div class="jmsg" id="jmsg"></div>
+    <button class="jlink" id="rjold" type="button">구글 설문지 '반 연결 코드'를 받았어요</button>`;
+  const m=join.querySelector('#jmsg'), go=async()=>{
+    const n=join.querySelector('#rjn').value, c=join.querySelector('#rjc').value;
+    if(!n.trim()||!c.trim()){ m.className='jmsg bad'; m.textContent='반 이름과 반 코드를 모두 써 주세요.'; return; }
+    m.className='jmsg'; m.textContent='확인하는 중…';
+    try{ const who=await roomEnter(n,c); m.textContent=''; draw(); if(who==='teacher') openAnalysis(); }
+    catch(e){ m.className='jmsg bad'; m.textContent=(e&&e.msg)||netErr(e)||'들어가지 못했어요. 잠시 뒤 다시 해 주세요.'; }
+  };
+  join.querySelector('#rjb').onclick=go;
+  join.querySelectorAll('input').forEach(x=>x.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }));
+  join.querySelector('#rjold').onclick=()=>{ join.innerHTML=joinOld; document.getElementById('jbtn').onclick=joinClass; document.getElementById('jin').addEventListener('keydown',e=>{ if(e.key==='Enter') joinClass(); }); };
+}
+joinRoomUI();
+/* 반 링크(#R.<반 이름>.<코드>)로 왔으면 바로 들어가기 */
+const RP=PARTS.find(p=>/^R\.[A-Za-z0-9_-]+\.\d{6}$/.test(p));
+if(RP){ const [,n64,c]=RP.split('.'); let nm=''; try{ nm=ub64(n64); }catch(_){}
+  if(nm&&!(ROOM&&ROOM.code===c&&normName(ROOM.name)===normName(nm))){ roomEnter(nm,c).then(()=>draw()).catch(e=>{ const m=document.getElementById('jmsg'); if(m){ m.className='jmsg bad'; m.textContent=(e&&e.msg)||'반에 들어가지 못했어요.'; } }); }
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(_){}
+}
+
+/* 상단 칩·연결 칸 */
+const _draw=draw;
+draw=function(){ _draw();
+  const chip=document.getElementById('clsChip');
+  if(ROOM){ chip.textContent='✓ 우리 반: '+ROOM.name; chip.classList.add('on'); }
+  else if(TEACH&&!CODE){ chip.textContent='🧑‍🏫 '+TEACH.name+' (선생님)'; chip.classList.add('on'); }
+  document.getElementById('join').hidden=!!(CODE||ROOM);
+};
+
+/* ----- 학생: 끝나면 바로 보내기 (설문지 새 창 없음) ----- */
+const _openSend=openSend, _sent=new Set();
+openSend=function(info){
+  if(!ROOM) return _openSend(info);
+  const old=document.getElementById('sendS'); if(old) old.remove();
+  const w=document.createElement('div'); w.className='sheet sendS'; w.id='sendS';
+  const travel=info.kind==='travel', what=`${info.lesson} · ${travel?`시간 여행 <b>${info.sim}점</b>`:`귀환 퀴즈 <b>${info.quiz}점</b>`}`;
+  w.innerHTML=`<div class="in" role="dialog" aria-modal="true" aria-labelledby="rs3"><h3 id="rs3">선생님께 보내기 · ${esc(info.stage)}</h3><div class="sc">${what}</div><div id="rsb"></div><div class="msg" id="rsm"></div><div class="row"><button class="pbtn ghost" id="rsx" type="button">닫기</button></div></div>`;
+  document.body.appendChild(w); w.querySelector('#rsx').onclick=()=>w.remove();
+  const box=w.querySelector('#rsb'), msg=w.querySelector('#rsm');
+  const done=num=>{ box.innerHTML=`<div style="display:flex;gap:14px;align-items:center"><span class="rsent">✅</span><div><b>선생님께 보냈어요!</b><br><small>${esc(ROOM.name)} · ${num}번 · 이름은 보내지 않아요</small></div></div>`;
+    w.querySelector('.row').innerHTML=`<button class="pbtn" id="rsh" type="button">차시 목록으로</button><button class="pbtn ghost" id="rsx2" type="button">닫기</button>`;
+    w.querySelector('#rsh').onclick=()=>{ w.remove(); closeLesson(); }; w.querySelector('#rsx2').onclick=()=>w.remove(); };
+  const send=async num=>{
+    const key=[cur,info.stage,info.sim,info.quiz,num].join('|'); if(_sent.has(key)) return done(num);
+    box.innerHTML='<small>보내는 중…</small>'; msg.textContent='';
+    try{ await roomSend(info,num); _sent.add(key); done(num); }
+    catch(e){ msg.className='msg bad'; msg.textContent=(e&&e.msg)||'보내지 못했어요. 잠시 뒤 다시 눌러 주세요.';
+      if(e&&e.reset){ ROOM=null; rStore.set('room',null); draw(); box.innerHTML=''; return; }
+      box.innerHTML=`<button class="pbtn" id="rsr" type="button">다시 보내기</button>`; box.querySelector('#rsr').onclick=()=>send(num); }
+  };
+  const n=numOf(info.player);
+  if(n) send(n);
+  else { box.innerHTML=`<b>번호만 써요</b> <small>(이름은 쓰지 않아요)</small><div class="row"><input id="rsn" type="number" min="1" max="99" inputmode="numeric" placeholder="예: 3" style="font-size:18px;width:110px;padding:8px;border-radius:9px;border:1px solid #b9c7bf"><button class="pbtn" id="rsg" type="button">보내기</button></div>`;
+    const go=()=>{ const v=+box.querySelector('#rsn').value; if(!(v>=1&&v<=99)){ msg.className='msg bad'; msg.textContent='1~99 사이 번호를 써 주세요.'; return; } send(v); };
+    box.querySelector('#rsg').onclick=go; box.querySelector('#rsn').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') go(); }); setTimeout(()=>box.querySelector('#rsn').focus(),50); }
+};
+
+/* ----- 선생님 설정: 맨 위에 '우리 반 만들기' ----- */
+function qrSvg(url){ try{ const q=qrcode(0,'M'); q.addData(url); q.make(); return q.createSvgTag({cellSize:5,margin:2,scalable:true}); }catch(e){ return ''; } }
+function roomSettings(s){
+  const at=s.querySelector('.opt'); if(!at) return;
+  at.innerHTML=at.innerHTML.replace('<b>시트로 모아 보고 싶을 때만</b>','<b>모아 보고 싶을 때만</b>');
+  const box=document.createElement('div'); box.className='rbox'; box.id='rbox';
+  at.insertAdjacentElement('afterend',box);
+  const sep=document.createElement('p'); sep.className='gsep'; sep.innerHTML='<b>또는 ② 내 구글 시트로 받기</b> — 학생 결과를 선생님 구글 계정에만 두고 싶을 때 (예전 방법)';
+  box.insertAdjacentElement('afterend',sep);
+  const paint=async()=>{
+    if(TEACH){
+      box.innerHTML=`<h4>① 우리 반: ${esc(TEACH.name)} <span class="rec">반 코드 방식</span></h4><div id="rcd"><small>불러오는 중…</small></div>`;
+      try{ const pv=await teachPriv(); const link=roomLink(TEACH.name,pv.code);
+        box.querySelector('#rcd').innerHTML=`<div class="cols"><div class="qr">${qrSvg(link)}</div><div style="display:flex;flex-direction:column;gap:6px">
+          <small>학생은 첫 화면에서 반 이름과 반 코드를 쓰거나, 반 링크·QR로 들어와요.</small>
+          <div>반 이름 <b>${esc(TEACH.name)}</b></div><div>반 코드 <span class="code">${pv.code}</span></div>
+          <div class="row"><button class="pbtn" id="rcl" type="button">반 링크 복사</button><button class="pbtn ghost" id="rnc" type="button">반 코드 바꾸기</button><button class="pbtn ghost" id="rlo" type="button">이 기기에서 로그아웃</button></div></div></div>
+          <small>🔒 서버에는 <b>학생 번호·점수·처음 틀린 개념</b>만 저장되고 <b>30일 뒤 지워져요</b>. 이름은 「우리 반 결과」에서 선생님이 넣은 명렬로 <b>이 기기 안에서만</b> 보여요.<br>반 코드가 다른 반에 퍼졌다면 <b>반 코드 바꾸기</b>를 눌러요(학생은 새 코드로 다시 들어와요). 비밀번호는 되찾을 수 없으니 꼭 기억해 두세요.</small><div class="msg" id="rmsg"></div>`;
+        const m=box.querySelector('#rmsg');
+        box.querySelector('#rcl').onclick=()=>navigator.clipboard.writeText(link).then(()=>{ m.className='msg ok'; m.textContent='반 링크를 복사했어요. 클래스·게시판에 올려 주세요.'; },()=>{ m.className='msg'; m.textContent=link; });
+        box.querySelector('#rnc').onclick=async()=>{ if(!confirm('반 코드를 바꿀까요? 지금 코드로 들어온 학생은 새 코드로 다시 들어와야 해요.')) return; try{ await roomNewCode(); paint(); }catch(e){ m.className='msg bad'; m.textContent='바꾸지 못했어요. '+(netErr(e)||''); } };
+        box.querySelector('#rlo').onclick=()=>{ TEACH=null; rStore.set('teach',null); draw(); paint(); };
+      }catch(e){ box.querySelector('#rcd').innerHTML=`<small class="msg bad">반 정보를 불러오지 못했어요. ${netErr(e)||'비밀번호가 바뀌었거나 반이 지워졌을 수 있어요.'}</small> <button class="pbtn ghost" id="rlo2" type="button">로그아웃</button>`; box.querySelector('#rlo2').onclick=()=>{ TEACH=null; rStore.set('teach',null); draw(); paint(); }; }
+      return;
+    }
+    box.innerHTML=`<h4>① 간편하게 받기 <span class="rec">추천</span></h4>
+      <small>구글 시트·설문지 없이 <b>반 이름과 비밀번호</b>만 정하면 끝나요. 학생 결과가 「📊 우리 반 결과」에 바로 모여요.</small>
+      <div class="rf"><input id="rnm" placeholder="반 이름 (예: 하늘반2026)" maxlength="30" autocomplete="off"><input id="rpw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="new-password"><input id="rpw2" type="password" placeholder="비밀번호 확인" autocomplete="new-password"></div>
+      <div class="row"><button class="pbtn" id="rmk" type="button">우리 반 만들기</button></div>
+      <small>학교 이름은 쓰지 않아도 돼요. 이미 만든 반이 있으면 → 첫 화면 <b>우리 반 들어가기</b>에 반 이름과 <b>비밀번호</b>를 쓰면 선생님으로 들어가요.<br>🔒 학생 이름·궁금한 점은 서버로 보내지 않아요. 번호·점수만 30일 동안 보관해요.</small><div class="msg" id="rmsg"></div>`;
+    const m=box.querySelector('#rmsg');
+    box.querySelector('#rmk').onclick=async()=>{
+      const n=box.querySelector('#rnm').value, p=box.querySelector('#rpw').value, p2=box.querySelector('#rpw2').value;
+      if(p!==p2){ m.className='msg bad'; m.textContent='비밀번호 두 칸이 달라요.'; return; }
+      m.className='msg'; m.textContent='만드는 중…';
+      try{ await roomCreate(n,p); draw(); paint(); }catch(e){ m.className='msg bad'; m.textContent=(e&&e.msg)||netErr(e)||'만들지 못했어요. 잠시 뒤 다시 해 주세요.'; }
+    };
+  };
+  paint();
+}
+const _openSettings=openSettings;
+openSettings=function(){ _openSettings(); const s=document.getElementById('sheet'); if(s) roomSettings(s); };
+document.getElementById('tset').onclick=openSettings;
+
+/* ----- 우리 반 결과: 반 코드 방식이면 바로·실시간으로 ----- */
+const rosKey=()=>'roster_'+(TEACH?TEACH.r:'');
+const roster=()=>rStore.get(rosKey())||{};
+function rowsFrom(list){ const ros=roster();
+  return list.map(x=>({name:ros[x.num]?`${x.num} ${ros[x.num]}`:`${x.num}번`, n:x.n, quiz:!!x.quiz, t:x.t==null?null:x.t, q:x.q==null?null:x.q,
+    wrong:(x.wrong||[]).map(s=>{ const k=String(s).match(/^\[(.+?)\]\s*(.*)$/); return k?{topic:k[1],ans:k[2]||'(답 없음)'}:{topic:'기타',ans:String(s)}; }),
+    cur:'', tries:x.tries||0, _at:x.at&&x.at.toMillis?x.at.toMillis():Date.now(), _stage:x.stage, _num:x.num})).sort((a,b)=>a._at-b._at); }
+function csvOf(rows){ const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  return '﻿'+[['번호','이름(이 기기 명렬)','차시','단계','시간 여행 점수','귀환 퀴즈 점수','틀린 선택','보낸 시각'].map(q).join(','),
+    ...rows.map(r=>[r._num,(roster()[r._num]||''),(typeof CH!=='undefined'?CH[r.n-1]+'차시 ':'')+(T[r.n-1]||''),r._stage,r.t??'',r.q??'',r.wrong.map(w=>`[${w.topic}] ${w.ans}`).join(' / '),new Date(r._at).toLocaleString('ko-KR')].map(q).join(','))].join('\r\n'); }
+let _unsub=null;
+function roomAnalysis(a){
+  const ain=a.querySelector('#ain'), res=a.querySelector('#ares');
+  const top=document.createElement('div'); top.className='card'; top.id='rtop'; ain.insertAdjacentElement('beforebegin',top);
+  const stop=()=>{ if(_unsub){ try{ _unsub(); }catch(_){} _unsub=null; } };
+  a.querySelector('#ax').addEventListener('click',stop);
+  const login=()=>{ stop(); ain.hidden=true; res.innerHTML='';
+    top.innerHTML=`<b>🧑‍🏫 반 코드 방식으로 보기</b><div><small>반 이름과 <b>선생님 비밀번호</b>를 쓰면 학생 결과가 바로 보여요.</small></div>
+      <div class="rlog"><input id="aln" placeholder="반 이름" autocomplete="off"><input id="alp" type="password" placeholder="선생님 비밀번호" autocomplete="current-password"><button class="gbtn" id="alg" type="button">열기</button></div><div class="amsg" id="alm"></div>
+      <div style="margin-top:10px"><button class="tbtn" id="alsh" type="button">📊 구글 시트를 붙여 넣어 볼게요 (예전 방법)</button></div>`;
+    const m=top.querySelector('#alm'), go=async()=>{ m.textContent='확인하는 중…'; try{ await roomEnter(top.querySelector('#aln').value,top.querySelector('#alp').value,true); draw(); live(); }catch(e){ m.textContent=(e&&e.msg)||netErr(e)||'열지 못했어요.'; } };
+    top.querySelector('#alg').onclick=go; top.querySelectorAll('input').forEach(x=>x.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }));
+    top.querySelector('#alsh').onclick=()=>{ top.hidden=true; ain.hidden=false; };
+  };
+  const live=async()=>{ stop(); ain.hidden=true; top.hidden=false;
+    top.innerHTML=`<div class="rtop"><div><b>${esc(TEACH.name)}</b> <span class="live" id="rlv">● 불러오는 중…</span></div>
+      <div class="btns"><button class="tbtn" id="rros" type="button">📋 명렬</button><button class="tbtn" id="rcsv" type="button">⬇ 엑셀(CSV)</button><button class="tbtn" id="rclr" type="button">🗑 반 비우기</button><button class="tbtn" id="rsheet" type="button">구글 시트로 보기</button></div></div><div class="amsg" id="rtm"></div>`;
+    const m=top.querySelector('#rtm'); let rows=[], curN=0;
+    const show=()=>{ const L=buildLessons(rows), ns=Object.keys(L).map(Number).sort((x,y)=>x-y);
+      if(!ns.length){ res.innerHTML=`<div class="card"><p class="how">아직 들어온 결과가 없어요. 학생이 시간 여행이나 귀환 퀴즈를 마치면 여기에 <b>바로</b> 나타나요.</p></div>`; return; }
+      if(!L[curN]) curN=ns[ns.length-1];
+      res.innerHTML=renderLesson(L[curN],ns); res.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ curN=+b.dataset.n; show(); }); };
+    try{
+      const {db}=await fbReady(); await teachPriv();
+      const now=Date.now(); const col=db.collection('rooms').doc(TEACH.r).collection('res');
+      _unsub=col.onSnapshot(qs=>{ const list=[]; qs.forEach(d=>{ const x=d.data(); if(x.exp&&x.exp.toMillis()<now){ d.ref.delete().catch(()=>{}); return; } list.push(x); });
+        rows=rowsFrom(list); const lv=top.querySelector('#rlv'); if(lv) lv.textContent=`● 실시간 · 결과 ${list.length}개`; show(); },
+        e=>{ m.textContent='결과를 불러오지 못했어요. '+(netErr(e)||'다시 로그인해 주세요.'); });
+    }catch(e){ m.textContent='반에 들어가지 못했어요. '+(netErr(e)||''); TEACH=null; rStore.set('teach',null); draw(); login(); return; }
+    top.querySelector('#rsheet').onclick=()=>{ stop(); top.hidden=true; res.innerHTML=''; ain.hidden=false; };
+    top.querySelector('#rcsv').onclick=()=>{ const b=new Blob([csvOf(rows)],{type:'text/csv;charset=utf-8'}); const u=URL.createObjectURL(b); const l=document.createElement('a'); l.href=u; l.download=`${TEACH.name}_결과.csv`; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); };
+    top.querySelector('#rclr').onclick=async()=>{ if(!confirm('우리 반 결과를 모두 지울까요? 되돌릴 수 없어요.')) return;
+      try{ const {db}=await fbReady(); const qs=await db.collection('rooms').doc(TEACH.r).collection('res').get(); let b=db.batch(), k=0;
+        for(const d of qs.docs){ b.delete(d.ref); if(++k%400===0){ await b.commit(); b=db.batch(); } } await b.commit(); m.textContent='결과를 모두 지웠어요.'; }catch(e){ m.textContent='지우지 못했어요. '+(netErr(e)||''); } };
+    top.querySelector('#rros').onclick=()=>{ const ros=roster();
+      const w=document.createElement('div'); w.className='sheet'; w.innerHTML=`<div class="in" role="dialog" aria-modal="true"><h3>📋 우리 반 명렬</h3>
+        <small>한 줄에 <b>번호 이름</b>씩 붙여 넣어요(엑셀·나이스에서 복사해도 돼요). 명렬은 <b>이 기기 브라우저에만</b> 저장되고 서버로 가지 않아요.</small>
+        <textarea class="ros" id="rost" style="min-height:220px;font:inherit;font-size:16px;padding:10px;border-radius:10px">${Object.entries(ros).sort((x,y)=>x[0]-y[0]).map(([k,v])=>k+' '+v).join('\n')}</textarea>
+        <div class="row"><button class="pbtn" id="rosv" type="button">저장</button><button class="pbtn ghost" id="rosd" type="button">명렬 지우기</button><button class="pbtn ghost" id="rosx" type="button">닫기</button></div></div>`;
+      document.body.appendChild(w);
+      w.querySelector('#rosv').onclick=()=>{ const o={}; w.querySelector('#rost').value.split(/\r?\n/).forEach(l=>{ const k=l.trim().match(/^(\d{1,2})\s*[.\-)\t ]\s*(.+)$/); if(k) o[+k[1]]=k[2].trim().slice(0,20); }); rStore.set(rosKey(),o); w.remove(); rows=rows.map(r=>({...r,name:o[r._num]?`${r._num} ${o[r._num]}`:`${r._num}번`})); show(); };
+      w.querySelector('#rosd').onclick=()=>{ rStore.set(rosKey(),null); w.remove(); rows=rows.map(r=>({...r,name:`${r._num}번`})); show(); };
+      w.querySelector('#rosx').onclick=()=>w.remove(); };
+  };
+  if(TEACH) live(); else login();
+}
+const _openAnalysis=openAnalysis;
+openAnalysis=function(){ _openAnalysis(); const a=document.getElementById('ana'); if(a) roomAnalysis(a); };
+document.getElementById('tana').onclick=openAnalysis;
+}
+
 draw();
 </script>
