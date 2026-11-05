@@ -716,7 +716,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .rbox small{color:#4a5a52;line-height:1.55}.rbox .code{font-size:30px;font-weight:800;letter-spacing:4px;color:#1f4d35}
 .rbox .qr{width:150px;height:150px;background:#fff;border-radius:8px;padding:4px}.rbox .qr svg{width:100%;height:100%}
 .rbox .cols{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.gsep{margin:4px 0 -4px;font-size:15px;color:#5b5446}
+.rtabs{display:flex;gap:6px;flex-wrap:wrap}.rtabs button{font:inherit;font-size:14px;padding:7px 12px;border-radius:999px;border:1px solid #9fb8aa;background:#fff;color:#1f4d35;cursor:pointer}.rtabs button[aria-pressed="true"]{background:#2f6b4a;color:#fff;border-color:#2f6b4a;font-weight:700}
 .rtop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
 .rtop .live{color:var(--ok,#4fbf7f);font-size:14px}
 .rtop .btns{display:flex;gap:8px;flex-wrap:wrap}
@@ -731,8 +731,7 @@ const joinOld=join.innerHTML;
 function joinRoomUI(){
   join.innerHTML=`<div><b>🔗 우리 반 들어가기</b><small>선생님이 알려 준 <b>반 이름</b>과 <b>반 코드</b>(숫자 6자리)를 써요. 한 번만 하면 돼요.</small></div>
     <div class="rrow"><input id="rjn" placeholder="반 이름" autocomplete="off" maxlength="30"><input id="rjc" placeholder="반 코드" inputmode="numeric" autocomplete="off" maxlength="40"><button id="rjb" class="tbtn" type="button">들어가기</button></div>
-    <div class="jmsg" id="jmsg"></div>
-    <button class="jlink" id="rjold" type="button">구글 설문지 '반 연결 코드'를 받았어요</button>`;
+    <div class="jmsg" id="jmsg"></div>`;
   const m=join.querySelector('#jmsg'), go=async()=>{
     const n=join.querySelector('#rjn').value, c=join.querySelector('#rjc').value;
     if(!n.trim()||!c.trim()){ m.className='jmsg bad'; m.textContent='반 이름과 반 코드를 모두 써 주세요.'; return; }
@@ -742,7 +741,7 @@ function joinRoomUI(){
   };
   join.querySelector('#rjb').onclick=go;
   join.querySelectorAll('input').forEach(x=>x.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }));
-  join.querySelector('#rjold').onclick=()=>{ join.innerHTML=joinOld; document.getElementById('jbtn').onclick=joinClass; document.getElementById('jin').addEventListener('keydown',e=>{ if(e.key==='Enter') joinClass(); }); };
+  if(0) join.querySelector('#rjold').onclick=()=>{ join.innerHTML=joinOld; document.getElementById('jbtn').onclick=joinClass; document.getElementById('jin').addEventListener('keydown',e=>{ if(e.key==='Enter') joinClass(); }); };
 }
 joinRoomUI();
 /* 반 링크(#R.<반 이름>.<코드>)로 왔으면 바로 들어가기 */
@@ -793,14 +792,15 @@ openSend=function(info){
 function qrSvg(url){ try{ const q=qrcode(0,'M'); q.addData(url); q.make(); return q.createSvgTag({cellSize:5,margin:2,scalable:true}); }catch(e){ return ''; } }
 function roomSettings(s){
   const at=s.querySelector('.opt'); if(!at) return;
-  at.innerHTML=at.innerHTML.replace('<b>시트로 모아 보고 싶을 때만</b>','<b>모아 보고 싶을 때만</b>');
+  at.innerHTML='✋ <b>설정은 선택이에요.</b> 우리 반을 만들지 않아도 모든 게임을 바로 수업에 쓸 수 있어요. 학생 점수를 <b>모아 보고 싶을 때만</b> 아래에서 우리 반을 만들어 주세요. (처음 한 번, 1분)';
+  /* 11-05: 구글 시트·설문지 방식은 화면에서 뺌(엔진에는 남아 있어 예전에 연결한 기기는 그대로 보냄) */
+  s.querySelectorAll('.two,.flowtx,ol.setst,details.oldway,#msg,#out').forEach(x=>x.style.display='none');
   const box=document.createElement('div'); box.className='rbox'; box.id='rbox';
   at.insertAdjacentElement('afterend',box);
-  const sep=document.createElement('p'); sep.className='gsep'; sep.innerHTML='<b>또는 ② 내 구글 시트로 받기</b> — 학생 결과를 선생님 구글 계정에만 두고 싶을 때 (예전 방법)';
-  box.insertAdjacentElement('afterend',sep);
+  let mode='new';
   const paint=async()=>{
     if(TEACH){
-      box.innerHTML=`<h4>① 우리 반: ${esc(TEACH.name)} <span class="rec">반 코드 방식</span></h4><div id="rcd"><small>불러오는 중…</small></div>`;
+      box.innerHTML=`<h4>우리 반: ${esc(TEACH.name)}</h4><div id="rcd"><small>불러오는 중…</small></div>`;
       try{ const pv=await teachPriv(); const link=roomLink(TEACH.name,pv.code);
         box.querySelector('#rcd').innerHTML=`<div class="cols"><div class="qr">${qrSvg(link)}</div><div style="display:flex;flex-direction:column;gap:6px">
           <small>학생은 첫 화면에서 반 이름과 반 코드를 쓰거나, 반 링크·QR로 들어와요.</small>
@@ -814,12 +814,27 @@ function roomSettings(s){
       }catch(e){ box.querySelector('#rcd').innerHTML=`<small class="msg bad">반 정보를 불러오지 못했어요. ${netErr(e)||'비밀번호가 바뀌었거나 반이 지워졌을 수 있어요.'}</small> <button class="pbtn ghost" id="rlo2" type="button">로그아웃</button>`; box.querySelector('#rlo2').onclick=()=>{ TEACH=null; rStore.set('teach',null); draw(); paint(); }; }
       return;
     }
-    box.innerHTML=`<h4>① 간편하게 받기 <span class="rec">추천</span></h4>
-      <small>구글 시트·설문지 없이 <b>반 이름과 비밀번호</b>만 정하면 끝나요. 학생 결과가 「📊 우리 반 결과」에 바로 모여요.</small>
+    const tabs=`<div class="rtabs"><button type="button" data-m="new" aria-pressed="${mode==='new'}">새 반 만들기</button><button type="button" data-m="in" aria-pressed="${mode==='in'}">이미 만든 반에 들어가기</button></div>`;
+    const wire=()=>box.querySelectorAll('.rtabs button').forEach(b=>b.onclick=()=>{ mode=b.dataset.m; paint(); });
+    if(mode==='in'){
+      box.innerHTML=`<h4>우리 반</h4>${tabs}
+        <small>전에 만든 반의 <b>반 이름</b>과 <b>선생님 비밀번호</b>를 써요. 다른 컴퓨터·집 노트북에서도 이렇게 들어오면 돼요.</small>
+        <div class="rf"><input id="rnm" placeholder="반 이름" maxlength="30" autocomplete="off"><input id="rpw" type="password" placeholder="선생님 비밀번호" autocomplete="current-password"></div>
+        <div class="row"><button class="pbtn" id="rin" type="button">들어가기</button></div><div class="msg" id="rmsg"></div>`;
+      wire(); const m=box.querySelector('#rmsg');
+      const go=async()=>{ m.className='msg'; m.textContent='확인하는 중…';
+        try{ await roomEnter(box.querySelector('#rnm').value,box.querySelector('#rpw').value,true); draw(); paint(); }
+        catch(e){ m.className='msg bad'; m.textContent=(e&&e.msg)||netErr(e)||'들어가지 못했어요.'; } };
+      box.querySelector('#rin').onclick=go; box.querySelectorAll('input').forEach(x=>x.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }));
+      setTimeout(()=>box.querySelector('#rnm').focus(),60);
+      return;
+    }
+    box.innerHTML=`<h4>우리 반</h4>${tabs}
+      <small><b>반 이름과 비밀번호</b>만 정하면 끝나요. 학생 결과가 「📊 우리 반 결과」에 바로 모여요.</small>
       <div class="rf"><input id="rnm" placeholder="반 이름 (예: 하늘반2026)" maxlength="30" autocomplete="off"><input id="rpw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="new-password"><input id="rpw2" type="password" placeholder="비밀번호 확인" autocomplete="new-password"></div>
       <div class="row"><button class="pbtn" id="rmk" type="button">우리 반 만들기</button></div>
-      <small>학교 이름은 쓰지 않아도 돼요. 이미 만든 반이 있으면 → 첫 화면 <b>우리 반 들어가기</b>에 반 이름과 <b>비밀번호</b>를 쓰면 선생님으로 들어가요.<br>🔒 학생 이름·궁금한 점은 서버로 보내지 않아요. 번호·점수만 30일 동안 보관해요.</small><div class="msg" id="rmsg"></div>`;
-    const m=box.querySelector('#rmsg');
+      <small>학교 이름은 쓰지 않아도 돼요.<br>🔒 학생 이름·궁금한 점은 서버로 보내지 않아요. 번호·점수만 30일 동안 보관해요.</small><div class="msg" id="rmsg"></div>`;
+    wire(); const m=box.querySelector('#rmsg');
     box.querySelector('#rmk').onclick=async()=>{
       const n=box.querySelector('#rnm').value, p=box.querySelector('#rpw').value, p2=box.querySelector('#rpw2').value;
       if(p!==p2){ m.className='msg bad'; m.textContent='비밀번호 두 칸이 달라요.'; return; }
@@ -830,7 +845,23 @@ function roomSettings(s){
   paint();
 }
 const _openSettings=openSettings;
-openSettings=function(){ _openSettings(); const s=document.getElementById('sheet'); if(s) roomSettings(s); };
+/* 선생님 설정 잠금(11-05): 학생이 설정을 열지 못하게. SET_HASH = sha256('tt-set:'+비밀번호), build_hub.py가 채움(없으면 잠금 없음) */
+const SET_HASH='6ef33996c11b09fcf4992ffea2e96cfac857d43b8d33e6bcab7bb8f30939f9fe';
+let _setOK=(()=>{ try{ return sessionStorage.getItem(RKEY+'setok')==='1'; }catch(e){ return false; } })();
+function openSettingsReal(){ _openSettings(); const s=document.getElementById('sheet'); if(s) roomSettings(s); }
+openSettings=function(){
+  if(_setOK||!/^[0-9a-f]{64}$/.test(SET_HASH)) return openSettingsReal();
+  const w=document.createElement('div'); w.className='sheet'; w.id='setlock';
+  w.innerHTML=`<div class="in" role="dialog" aria-modal="true" aria-labelledby="sl3" style="max-width:420px"><h3 id="sl3">🔒 선생님 설정</h3>
+    <small>선생님만 들어갈 수 있어요. 설정 비밀번호를 써 주세요.</small>
+    <input id="slp" type="password" autocomplete="off" style="font:inherit;font-size:18px;padding:10px 12px;border-radius:10px;border:2px solid #c9a24a">
+    <div class="msg" id="slm"></div><div class="row"><button class="pbtn" id="slg" type="button">열기</button><button class="pbtn ghost" id="slx" type="button">닫기</button></div></div>`;
+  document.body.appendChild(w);
+  const i=w.querySelector('#slp'), m=w.querySelector('#slm');
+  const go=async()=>{ if(await sha('tt-set:'+i.value.trim())===SET_HASH){ _setOK=true; try{ sessionStorage.setItem(RKEY+'setok','1'); }catch(_){} w.remove(); openSettingsReal(); } else { m.className='msg bad'; m.textContent='비밀번호가 맞지 않아요.'; i.select(); } };
+  w.querySelector('#slg').onclick=go; i.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }); w.querySelector('#slx').onclick=()=>w.remove();
+  w.addEventListener('click',e=>{ if(e.target===w) w.remove(); }); setTimeout(()=>i.focus(),50);
+};
 document.getElementById('tset').onclick=openSettings;
 
 /* ----- 우리 반 결과: 반 코드 방식이면 바로·실시간으로 ----- */
@@ -852,14 +883,13 @@ function roomAnalysis(a){
   const login=()=>{ stop(); ain.hidden=true; res.innerHTML='';
     top.innerHTML=`<b>🧑‍🏫 반 코드 방식으로 보기</b><div><small>반 이름과 <b>선생님 비밀번호</b>를 쓰면 학생 결과가 바로 보여요.</small></div>
       <div class="rlog"><input id="aln" placeholder="반 이름" autocomplete="off"><input id="alp" type="password" placeholder="선생님 비밀번호" autocomplete="current-password"><button class="gbtn" id="alg" type="button">열기</button></div><div class="amsg" id="alm"></div>
-      <div style="margin-top:10px"><button class="tbtn" id="alsh" type="button">📊 구글 시트를 붙여 넣어 볼게요 (예전 방법)</button></div>`;
+`;
     const m=top.querySelector('#alm'), go=async()=>{ m.textContent='확인하는 중…'; try{ await roomEnter(top.querySelector('#aln').value,top.querySelector('#alp').value,true); draw(); live(); }catch(e){ m.textContent=(e&&e.msg)||netErr(e)||'열지 못했어요.'; } };
     top.querySelector('#alg').onclick=go; top.querySelectorAll('input').forEach(x=>x.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }));
-    top.querySelector('#alsh').onclick=()=>{ top.hidden=true; ain.hidden=false; };
   };
   const live=async()=>{ stop(); ain.hidden=true; top.hidden=false;
     top.innerHTML=`<div class="rtop"><div><b>${esc(TEACH.name)}</b> <span class="live" id="rlv">● 불러오는 중…</span></div>
-      <div class="btns"><button class="tbtn" id="rros" type="button">📋 명렬</button><button class="tbtn" id="rcsv" type="button">⬇ 엑셀(CSV)</button><button class="tbtn" id="rclr" type="button">🗑 반 비우기</button><button class="tbtn" id="rsheet" type="button">구글 시트로 보기</button></div></div><div class="amsg" id="rtm"></div>`;
+      <div class="btns"><button class="tbtn" id="rros" type="button">📋 명렬</button><button class="tbtn" id="rcsv" type="button">⬇ 엑셀(CSV)</button><button class="tbtn" id="rclr" type="button">🗑 반 비우기</button></div></div><div class="amsg" id="rtm"></div>`;
     const m=top.querySelector('#rtm'); let rows=[], curN=0;
     const show=()=>{ const L=buildLessons(rows), ns=Object.keys(L).map(Number).sort((x,y)=>x-y);
       if(!ns.length){ res.innerHTML=`<div class="card"><p class="how">아직 들어온 결과가 없어요. 학생이 시간 여행이나 귀환 퀴즈를 마치면 여기에 <b>바로</b> 나타나요.</p></div>`; return; }
@@ -872,7 +902,6 @@ function roomAnalysis(a){
         rows=rowsFrom(list); const lv=top.querySelector('#rlv'); if(lv) lv.textContent=`● 실시간 · 결과 ${list.length}개`; show(); },
         e=>{ m.textContent='결과를 불러오지 못했어요. '+(netErr(e)||'다시 로그인해 주세요.'); });
     }catch(e){ m.textContent='반에 들어가지 못했어요. '+(netErr(e)||''); TEACH=null; rStore.set('teach',null); draw(); login(); return; }
-    top.querySelector('#rsheet').onclick=()=>{ stop(); top.hidden=true; res.innerHTML=''; ain.hidden=false; };
     top.querySelector('#rcsv').onclick=()=>{ const b=new Blob([csvOf(rows)],{type:'text/csv;charset=utf-8'}); const u=URL.createObjectURL(b); const l=document.createElement('a'); l.href=u; l.download=`${TEACH.name}_결과.csv`; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); };
     top.querySelector('#rclr').onclick=async()=>{ if(!confirm('우리 반 결과를 모두 지울까요? 되돌릴 수 없어요.')) return;
       try{ const {db}=await fbReady(); const qs=await db.collection('rooms').doc(TEACH.r).collection('res').get(); let b=db.batch(), k=0;
