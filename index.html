@@ -705,7 +705,9 @@ const numOf=p=>{ const m=String(p||'').match(/^\s*(\d{1,2})/); return m?+m[1]:0;
 /* ----- 화면: 스타일 ----- */
 document.head.insertAdjacentHTML('beforeend',`<style>
 .join .rrow{display:flex;gap:8px;flex:1 1 420px;max-width:620px;flex-wrap:wrap}
-.join .rrow input{flex:1 1 150px;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink,#eee)}
+.join .rrow input{flex:1 1 150px;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:2px solid var(--gold,#e0b84f);background:#fffdf6;color:#1a1408}
+.join .rrow input::placeholder,.ana .rlog input::placeholder{color:#7a7262;opacity:1}
+.join .rrow input:focus,.ana .rlog input:focus{outline:3px solid rgba(224,184,79,.45);outline-offset:1px}
 .join .rrow button,.join .jlink{font:inherit}
 .join .jlink{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;padding:0}
 .rbox{border:2px solid #2f6b4a;border-radius:14px;padding:14px 16px;background:#f2faf5;display:flex;flex-direction:column;gap:10px}
@@ -718,7 +720,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .rtop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
 .rtop .live{color:var(--ok,#4fbf7f);font-size:14px}
 .rtop .btns{display:flex;gap:8px;flex-wrap:wrap}
-.ana .rlog{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.ana .rlog input{flex:1 1 180px;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:inherit}
+.ana .rlog{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.ana .rlog input{flex:1 1 180px;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:2px solid var(--gold,#e0b84f);background:#fffdf6;color:#1a1408}
 .ana textarea.ros{min-height:180px}
 .rsent{font-size:44px;line-height:1}
 </style>`);
