@@ -82,7 +82,7 @@ function paint(){ document.querySelectorAll('.tabs button').forEach(b=>b.setAttr
 /* 📈 이용 현황 */
 let range=30;
 async function useTab(p){
-  const qs=await db.collection('stats').get(); const days={}; qs.forEach(d=>days[d.id]=d.data());
+  const qs=await db.collection('stats').get(); const days={}; qs.forEach(d=>{ const m=d.id.match(/^(\d{4}-\d{2}-\d{2})_(.+)$/); if(!m) return; (days[m[1]]||(days[m[1]]={}))[m[2]]=d.data().n||0; });
   const ids=Object.keys(days).sort(); const today=kday();
   const inRange=id=>range===0||id>kday(Date.now()-(range-1)*864e5);
   const sum=(f,keys)=>keys.reduce((a,id)=>a+Object.entries(days[id]).filter(([k])=>f(k)).reduce((x,[,v])=>x+(+v||0),0),0);

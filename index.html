@@ -705,7 +705,7 @@ async function roomSend(info,num){
 function kday(){ const d=new Date(Date.now()+9*36e5); return d.toISOString().slice(0,10); }
 function tally(key){ if(!/^([tq]\d{1,2}[sd]|rs)$/.test(key)) return;
   const sk=RKEY+'tal_'+kday()+'_'+key; try{ if(key!=='rs'&&sessionStorage.getItem(sk)) return; sessionStorage.setItem(sk,'1'); }catch(_){}
-  fbReady().then(({db,FV})=>db.collection('stats').doc(kday()).set({[key]:FV.increment(1)},{merge:true})).catch(()=>{}); }
+  fbReady().then(({db,FV})=>db.collection('stats').doc(kday()+'_'+key).set({n:FV.increment(1)},{merge:true})).catch(()=>{}); }
 const _openLesson=openLesson;
 openLesson=function(i,mode){ _openLesson(i,mode); if(DEV) return; tally((mode==='quiz'?'q':'t')+i+'s'); };
 window.addEventListener('message',e=>{ const m=e.data; if(!m||m.hanguksa!=='done'||!cur||DEV) return; tally((m.kind==='quiz'?'q':'t')+cur+'d'); });
