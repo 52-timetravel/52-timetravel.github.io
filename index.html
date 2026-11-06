@@ -1,6 +1,6 @@
 <title>오늘의 시간 여행 · 초등 한국사</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
 /* 교과서판: 아이스크림 사회 5-2 단원·소단원 띠 아래에 차시 카드. 심화판 목록 화면과 같은 틀. 기기 저장 이름만 따로(hanguksa_tb_*) */
 /* Layout: 시대별 띠(선사~현대) 아래에 차시 카드를 연표처럼 늘어놓은 목록. 고른 차시는 같은 화면 위에 꽉 차게 열림. 밤하늘 남색 바탕 + 금빛, 시대마다 띠 색이 다름 */
@@ -227,6 +227,93 @@ a.atg{text-decoration:none}
 .ana .detpie{margin-bottom:8px}
 .ana .detpie .dn svg{width:120px;height:120px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ===== 교과서판 '밝은 한지' 첫 화면 (2026-11-06) — make_hub_tb.py가 목록 화면 <style> 끝에 붙임 ===== */
+:root{
+  --bg:#F7F1E3; --panel:#FFFFFF; --line:#E4D9C2; --fg:#2A2118; --muted:#6E6253;
+  --gold:#C8553D; --gold-deep:#8A5A1C; --paper:#FFFDF7; --ink:#2A2118; --ok:#2F6F68;
+  --teal:#2F6F68; --cream:#FFFDF7;
+  --f-display:"Jua","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+  --f-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  color-scheme:light;
+}
+body{background:var(--bg);color:var(--fg)}
+.wrap{max-width:1160px;gap:30px;padding-block:0 56px}
+/* 맨 위 줄 */
+.hj-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:18px 0;border-bottom:1px solid var(--line)}
+.hj-brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:22px;color:var(--fg)}
+.hj-top .cls{gap:6px}
+.hj-top .tbtn{border:0;border-radius:10px;padding:9px 12px;color:#4A3F33;font-size:15px;display:inline-flex;align-items:center;gap:6px}
+.hj-top .tbtn:hover{background:#EFE6D4}
+.hj-top .tbtn svg{flex:none}
+.cls .chip{background:#FFFDF7;border:1px solid var(--line);color:var(--muted)}
+.cls .chip.on{border-color:var(--teal);color:var(--teal);background:#E7F1EE}
+.cls .chip#devChip{border-color:var(--gold);color:var(--gold)}
+/* 첫머리: 제목 + 우리 반 들어가기 + 시간의 문 */
+.hj-hero{display:flex;gap:40px;align-items:center;flex-wrap:wrap}
+.hj-hero .tx{flex:1 1 460px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.hj-eye{margin:0;font-size:15px;color:#8A5A2B;font-weight:700;letter-spacing:.5px}
+.hj-hero h1{margin:0;font-family:var(--f-display);font-weight:400;font-size:clamp(38px,6vw,62px);line-height:1.12;color:var(--fg)}
+.hj-hero .lead{margin:0;font-size:18px;line-height:1.6;color:#5B4F41}
+.hj-gate{flex:0 1 380px;display:flex;justify-content:center}
+.hj-gate svg{width:100%;max-width:380px;height:auto}
+@media (max-width:760px){.hj-gate{display:none}}
+.join{background:var(--cream);border:2px solid #E8C989;border-radius:18px;padding:18px 20px}
+.join>div>b{color:var(--fg);font-size:18px}
+.join small{color:var(--muted)}
+.join small b{color:var(--fg)}
+.join button{background:var(--gold);color:#fff}
+.join .jmsg.bad{color:#B3412E}
+.join .jlink{color:var(--muted)}
+.hj-in{display:inline-flex;align-items:center;gap:8px;font-size:15px;color:var(--teal);background:#E7F1EE;border:1px solid #B9D6CF;border-radius:999px;padding:6px 14px;align-self:flex-start}
+.hj-in[hidden]{display:none}
+/* 떠나기 → 배워보기 → 돌아오기 */
+.hj-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.hj-flow{grid-template-columns:1fr}}
+.hj-flow div{display:flex;gap:14px;align-items:center;padding:14px 16px;background:var(--cream);border:1px solid var(--line);border-radius:16px}
+.hj-flow i{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-family:var(--f-display);font-size:20px}
+.hj-flow b{font-size:17px;display:block}
+.hj-flow span{font-size:14px;color:var(--muted)}
+/* 단원 띠 */
+.era{gap:14px}
+.era h2{font-family:var(--f-display);font-size:26px;color:var(--fg);flex-wrap:wrap}
+.era h2::before{display:none}
+.era h2 .u{color:#fff;background:var(--c);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700}
+.era h2 small{font-size:14px}
+/* 차시 카드 */
+.grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.ls{background:#fff;border:0;border-radius:18px;box-shadow:0 2px 0 var(--line);padding:16px;gap:10px;min-height:0}
+.ls.open:hover{transform:translateY(-2px);box-shadow:0 4px 0 #D8CAAA;border:0}
+.ls .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ls .ic{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:var(--ct)}
+.ls .ic svg{width:34px;height:34px}
+.ls .star{font-size:13px;font-weight:700;color:#7A5A1C;background:#F4E6C5;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.ls .no{font-family:var(--f-body);font-size:13px;font-weight:700;color:var(--c);line-height:1.2}
+.ls .nm{font-size:19px;font-weight:700;line-height:1.3;margin-top:-6px}
+.ls .pg{font-size:13px;color:var(--muted);margin-top:-6px}
+.ls .acts{flex-direction:row;gap:8px}
+.ls .act{flex:1 1 0;flex-direction:column;justify-content:center;gap:1px;padding:9px 6px;border-radius:12px;font-size:15px;font-weight:700;text-align:center;border:1.5px solid #C9B996;color:#4A3F33;background:#fff}
+.ls .act:not(.q){background:var(--teal);border-color:var(--teal);color:#fff}
+.ls .act:not(.q) small{color:#D7EBE6}
+.ls .act.q{border-style:solid}
+.ls .act small{font-size:12px;font-weight:400;color:var(--muted)}
+.ls .act.did small{color:inherit;opacity:.9}
+.ls .act:hover{filter:brightness(1.05)}
+.ls.soon{opacity:1;background:transparent;box-shadow:none;border:2px dashed #D9C9A6}
+.ls.soon .ic{opacity:.55}
+.ls.soon .no,.ls.soon .nm{color:#8F8574}
+.ls.soon .st{color:#8F8574;font-size:14px}
+/* 결과·설정 화면도 밝게 */
+.ana{background:var(--bg)}
+.ana h2{color:var(--fg)}
+.ana .gbtn{background:var(--gold);color:#fff}
+.ana .amsg{color:#B3412E}
+.ana .up{color:#2F6F68}
+.ana td.n .dn,.ana .tbl .dn{color:#B3412E}
+.ana .hero{background:#fff}
+.ana .hero b{color:var(--gold)}
+.ana .tabs button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:#fff}
+.ana textarea{background:#fff}
+.sheet{background:rgba(42,33,24,.55)}
 </style>
 
 <div class="wrap" id="home">
@@ -610,6 +697,91 @@ function joinClass(){ const v=document.getElementById('jin').value.trim(), m=doc
   CODE=c[0]; clsStore.set(CODE); draw(); }
 document.getElementById('jbtn').onclick=joinClass;
 document.getElementById('jin').addEventListener('keydown',e=>{ if(e.key==='Enter') joinClass(); });
+/* ===== 교과서판 '밝은 한지' 첫 화면 (2026-11-06) — make_hub_tb.py가 목록 스크립트의 반 코드 방식(room.js) 앞에 넣음 =====
+   맨 위 줄(이름 + 선생님 메뉴) · 첫머리(제목 + 우리 반 들어가기 + 시간의 문) · 세 단계 · 차시 카드(대표 그림·해 봤어요) */
+(function(){
+  /* 단원 띠 색: 밝은 바탕에 맞게 진하게 */
+  const DEEP=['#8A6A45','#2F6F68','#3E7A8C','#B04A3A','#B8682A','#7B4F9E','#9A7410'];
+  const TINT=['#F1E6D3','#DDEBE7','#DCEAEE','#F6DCD6','#F6E3D0','#EAE0F2','#F3EACB'];
+  ERAS.forEach((e,i)=>{ e[2]=DEEP[i]||e[2]; e[5]=TINT[i]||'#EFE6D4'; });
+  /* 차시 대표 그림(선 그림, 34×34) */
+  const IC=['M17 3c-6 7-9 14-8 20a8 8 0 0 0 16 0c1-6-2-13-8-20zM13 16l4-4 4 4M12 22l5-3 5 3', /* 주먹도끼 */
+    'M8 6h18l-2 14-7 11-7-11zM10 11h14M12 15l4 4M18 15l4 4M14 21l3 3', /* 빗살무늬 토기 */
+    'M17 3c-3 4-4 7-3 10-3 3-3 7 0 10v5h6v-5c3-3 3-7 0-10 1-3 0-6-3-10zM11 28h12', /* 비파형 동검 */
+    'M4 12l26-3-2 5-22 2zM9 16v12M25 15v13M5 28h24', /* 고인돌 */
+    'M5 24l3-14 5 6 4-10 4 10 5-6 3 14zM5 28h24', /* 금관 */
+    'M6 16l11-9 11 9M9 14v14h16V14M14 28v-7h6v7', /* 집 */
+    'M17 3v3M11 9h12l-2 3H13zM9 15h16l-2 3H11zM7 21h20l-2 3H9zM12 24v6h10v-6', /* 탑 */
+    'M17 4a13 13 0 1 0 0 26a13 13 0 1 0 0-26M17 13a4 4 0 1 0 0 8a4 4 0 1 0 0-8M17 4v9M17 21v9M4 17h9M21 17h9', /* 연꽃무늬 수막새 */
+    'M7 28h20M10 28V14h14v14M8 14l9-8 9 8M15 28v-6h4v6', /* 궁궐 */
+    'M7 11a4 4 0 1 0 8 0a4 4 0 1 0-8 0M19 11a4 4 0 1 0 8 0a4 4 0 1 0-8 0M4 27c1-6 4-9 7-9s6 3 7 9M16 27c1-6 4-9 7-9s6 3 7 9', /* 사람들 */
+    'M6 28V8M6 8h18l-4 5 4 5H6', /* 깃발 */
+    'M14 4h6M15 4c0 4-1 5-3 7-4 4-5 9-3 14 1 3 4 5 8 5s7-2 8-5c2-5 1-10-3-14-2-2-3-3-3-7M12 19c2 2 4 2 5 0s3-2 5 0', /* 청자 */
+    'M4 13h26l-4-5H8zM7 13v15M27 13v15M12 28V18h10v10M4 28h26', /* 궁궐 문 */
+    'M6 7h10a3 3 0 0 1 3 3v17a3 3 0 0 0-3-3H6zM28 7H18a3 3 0 0 0-3 3', /* 책 */
+    'M11 8h12v18H11zM9 8h16M9 26h16M17 4v4', /* 측우기 */
+    'M4 21h26l-3 6H7zM8 21v-5h18v5M12 16l5-5 5 5M17 11V6', /* 배 */
+    'M17 4a13 13 0 1 0 0 26a13 13 0 1 0 0-26M13 13h8v8h-8z', /* 엽전 */
+    'M9 5h16v24H9zM9 5c-2 0-3 1-3 3s1 3 3 3M13 11h8M13 16h8M13 21h5', /* 족보 */
+    'M17 4c-7 0-11 5-11 12 0 8 5 13 11 13s11-5 11-13c0-7-4-12-11-12zM11 14h4M19 14h4M12 21c3 3 7 3 10 0', /* 탈 */
+    'M6 26h22M8 26V12h18v14M8 18h18M12 12V8h10v4M11 30l2-4M23 30l-2-4', /* 기차 */
+    'M17 4l11 4v8c0 7-5 12-11 14C11 28 6 23 6 16V8z', /* 방패 */
+    'M17 4c3 4 4 7 2 10M13 30h8M15 30v-8h4v8M12 22h10l-2-8h-6z', /* 횃불 */
+    'M6 28V6M6 6h22v14H6M17 13a3 3 0 1 0 0.01 0', /* 태극기 */
+    'M7 27l4-1 15-15-3-3L8 23zM20 8l3 3M5 30h24', /* 붓 */
+    'M10 12h14v14H10zM8 12h18M14 7l3 5 3-5M14 19h6', /* 라디오 */
+    'M17 6v3M17 25v3M6 17h3M25 17h3M9 9l2 2M23 23l2 2M25 9l-2 2M11 23l-2 2M17 12a5 5 0 1 0 0.01 0', /* 해 */
+    'M5 22c0-8 5-14 12-14s12 6 12 14zM3 22h28M17 8V5', /* 철모 */
+    'M17 29V16M17 16c-5 0-8-4-8-9 5 0 8 4 8 9zM17 20c4 0 7-3 7-7-4 0-7 3-7 7z']; /* 새싹 */
+  const ico=(i,c)=>`<svg viewBox="0 0 34 34" fill="none" stroke="${c}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="${IC[i-1]||IC[0]}"/></svg>`;
+  const svgI={res:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+    set:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+    pad:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>'};
+
+  /* 화면 틀 다시 짜기 (버튼은 옮기기만 해서 원래 동작 그대로) */
+  const home=document.getElementById('home'), hdr=home.querySelector('header'), cls=hdr.querySelector('.cls'), join=document.getElementById('join'), flow=home.querySelector('.flow');
+  const top=document.createElement('div'); top.className='hj-top';
+  top.innerHTML=`<div class="hj-brand"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#C8553D" stroke-width="2" aria-hidden="true"><circle cx="14" cy="14" r="11"/><path d="M14 7v7l5 3"/></svg>오늘의 시간 여행</div>`;
+  top.appendChild(cls);
+  const tana=cls.querySelector('#tana'), tset=cls.querySelector('#tset'), tpad=cls.querySelector('#tpad');
+  tana.innerHTML=svgI.res+'우리 반 결과'; tset.innerHTML=svgI.set+'선생님 설정'; tpad.innerHTML=svgI.pad+'패드 안내';
+  const hero=document.createElement('section'); hero.className='hj-hero';
+  hero.innerHTML=`<div class="tx"><p class="hj-eye">초등 5학년 한국사 · 아이스크림 사회 5-2 차시별 게임</p>
+      <h1>오늘은 어느 시대로<br>떠나 볼까?</h1>
+      <p class="lead">그 시대 사람이 되어 직접 고르고, 왜 그렇게 될 수밖에 없었는지 알아봐요.</p>
+      <span class="hj-in" id="hjIn" hidden></span></div>
+    <div class="hj-gate"><svg viewBox="0 0 400 380" role="img" aria-label="시간의 문 그림">
+      <ellipse cx="200" cy="350" rx="170" ry="18" fill="#E9DDC4"/>
+      <path d="M80 345V170a120 120 0 0 1 240 0v175" fill="#2F6F68"/><path d="M100 345V175a100 100 0 0 1 200 0v170" fill="#1E4A45"/>
+      <circle cx="200" cy="210" r="78" fill="none" stroke="#E8C989" stroke-width="3" stroke-dasharray="4 10"/>
+      <circle cx="200" cy="210" r="56" fill="none" stroke="#F2A65A" stroke-width="4"/><circle cx="200" cy="210" r="34" fill="#F2A65A" opacity=".35"/>
+      <path d="M200 176v34l22 14" stroke="#FFF3D6" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <path d="M70 170h260" stroke="#C8553D" stroke-width="10"/><path d="M60 158h280l-18-22H78z" fill="#C8553D"/><path d="M86 150h228" stroke="#E8C989" stroke-width="3"/>
+      <g fill="#C99A3B"><circle cx="120" cy="300" r="5"/><circle cx="280" cy="300" r="5"/></g>
+      <g stroke="#C99A3B" stroke-width="2" fill="none" opacity=".8"><path d="M40 90l8 8M48 90l-8 8M350 70l8 8M358 70l-8 8M360 230l6 6M366 230l-6 6"/></g></svg></div>`;
+  hero.querySelector('.tx').appendChild(join);
+  const f2=document.createElement('section'); f2.className='hj-flow'; f2.setAttribute('aria-label','한 차시 쓰는 법');
+  f2.innerHTML=`<div><i style="background:#F6D9CF;color:#A63E28">1</i><span><b>떠나기</b>수업 전, 시간 여행으로 먼저 겪어 봐요</span></div>
+    <div><i style="background:#D4E7E3;color:#1E4A45">2</i><span><b>배워보기</b>수업 시간, 헷갈린 것부터 선생님과</span></div>
+    <div><i style="background:#F4E6C5;color:#7A5A1C">3</i><span><b>돌아오기</b>수업 뒤, 귀환 퀴즈로 스스로 확인해요</span></div>`;
+  hdr.replaceWith(top); flow.replaceWith(f2); top.insertAdjacentElement('afterend',hero);
+
+  /* 차시 카드 */
+  draw=function(){
+    const best=store.get();
+    document.getElementById('eras').innerHTML=ERAS.map(([n,r,c,a,b,t])=>`<section class="era" style="--c:${c};--ct:${t}"><h2><span class="u">${r}</span>${n}<small>${CH[a-1].split('-')[1].split('~')[0]}~${CH[b-1].split('-')[1].split('~').pop()}차시</small></h2><div class="grid">`+
+      Array.from({length:b-a+1},(_,k)=>a+k).map(i=>{ const ok=!!READY[i], d=best[i]||{}, L=chLabel(i);
+        if(!ok) return `<div class="ls soon"><span class="ic">${ico(i,c)}</span><span class="no">${L.full}</span><span class="nm">${T[i-1]}</span><span class="st">곧 열려요</span></div>`;
+        const done=d.t!==undefined||d.q!==undefined;
+        return `<div class="ls open"><div class="hd"><span class="ic">${ico(i,c)}</span>${done?'<span class="star">★ 해 봤어요</span>':''}</div><span class="no">${L.full}</span><span class="nm">${T[i-1]}</span><span class="pg">교과서 ${PG[i-1]}쪽</span><div class="acts">
+          <button class="act ${d.t!==undefined?'did':''}" type="button" data-i="${i}" data-m="travel">시간 여행<small>${d.t!==undefined?`✓ ${d.t}점`:'수업 전'}</small></button>
+          <button class="act q ${d.q!==undefined?'did':''}" type="button" data-i="${i}" data-m="quiz">귀환 퀴즈<small>${d.q!==undefined?`✓ ${d.q}점`:'수업 후'}</small></button></div></div>`; }).join('')+`</div></section>`).join('');
+    document.querySelectorAll('.ls .act').forEach(b=>b.onclick=()=>openLesson(+b.dataset.i,b.dataset.m));
+    const chip=document.getElementById('clsChip'); chip.textContent=CODE?'✓ 우리 반 연결됨':'점수 보내기: 꺼짐'; chip.hidden=!(CODE||(typeof ROOM!=='undefined'&&ROOM)||(typeof TEACH!=='undefined'&&TEACH)); document.getElementById('join').hidden=!!CODE; chip.classList.toggle('on',!!CODE); document.getElementById('devChip').hidden=!DEV;
+    const hin=document.getElementById('hjIn'); if(hin){ const r=(typeof ROOM!=='undefined'&&ROOM)?ROOM:null; hin.hidden=!r&&!CODE; hin.textContent=r?`✓ 우리 반: ${r.name} · 끝나면 선생님께 바로 보내져요`:(CODE?'✓ 우리 반에 연결됐어요':''); }
+  };
+})();
+
 /* ===== 반 코드 방식 (2026-11-05): 구글 시트·설문지 없이 '반 이름 + 반 코드(학생) / 비밀번호(선생님)'로 결과 모으기 =====
    build_hub.py 여섯 번째 값(Firebase 웹 앱 설정 JSON)을 넣으면 켜짐. 없으면 이 블록은 아무 일도 하지 않음(예전 구글 시트 방식만).
    서버(Firestore, 서울)에 저장: 반 이름, 비밀번호·반 코드의 암호값, 학생 '번호'·점수·처음 틀린 개념·다시 한 횟수(30일 뒤 지움)
