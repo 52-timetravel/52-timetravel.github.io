@@ -695,11 +695,20 @@ async function roomSend(info,num){
     t:travel?Number(info.sim)||0:(tb!==undefined?Number(tb):null), q:travel?null:Number(info.quiz)||0,
     wrong:(info.wrong||[]).slice(0,40).map(s=>String(s).slice(0,160)), num, tries:+((String(info.stage).match(/(\d+)회/)||[0,0])[1]),
     at:FV.serverTimestamp(), exp:TS.fromMillis(Date.now()+30*864e5), u:uid};
-  try{ await ref.collection('res').add(doc); return; }catch(e){ if(netErr(e)) throw {msg:netErr(e)}; }
+  const bump=()=>{ tally('rs'); db.collection('rstats').doc(ROOM.r).set({n:FV.increment(1),last:FV.serverTimestamp()},{merge:true}).catch(()=>{}); };
+  try{ await ref.collection('res').add(doc); bump(); return; }catch(e){ if(netErr(e)) throw {msg:netErr(e)}; }
   try{ await ref.collection('members').doc(uid).set({codeH:await codeH(ROOM.r,ROOM.code),at:FV.serverTimestamp()}); }
   catch(e){ if(netErr(e)) throw {msg:netErr(e)}; throw {msg:'반 코드가 바뀌었어요. 선생님께 새 반 코드를 받아 첫 화면에서 다시 들어가 주세요.',reset:true}; }
-  doc.at=FV.serverTimestamp(); await ref.collection('res').add(doc);
+  doc.at=FV.serverTimestamp(); await ref.collection('res').add(doc); bump();
 }
+/* ----- 이용 현황 숫자 세기 (11-06): 날짜별로 '몇 번'만 셈. 누가·어느 반·기기는 남기지 않음 → 관리실(admin.html)에서 봄 ----- */
+function kday(){ const d=new Date(Date.now()+9*36e5); return d.toISOString().slice(0,10); }
+function tally(key){ if(!/^([tq]\d{1,2}[sd]|rs)$/.test(key)) return;
+  const sk=RKEY+'tal_'+kday()+'_'+key; try{ if(key!=='rs'&&sessionStorage.getItem(sk)) return; sessionStorage.setItem(sk,'1'); }catch(_){}
+  fbReady().then(({db,FV})=>db.collection('stats').doc(kday()).set({[key]:FV.increment(1)},{merge:true})).catch(()=>{}); }
+const _openLesson=openLesson;
+openLesson=function(i,mode){ _openLesson(i,mode); if(DEV) return; tally((mode==='quiz'?'q':'t')+i+'s'); };
+window.addEventListener('message',e=>{ const m=e.data; if(!m||m.hanguksa!=='done'||!cur||DEV) return; tally((m.kind==='quiz'?'q':'t')+cur+'d'); });
 const numOf=p=>{ const m=String(p||'').match(/^\s*(\d{1,2})/); return m?+m[1]:0; };
 
 /* ----- 화면: 스타일 ----- */
@@ -844,11 +853,26 @@ function roomSettings(s){
   };
   paint();
 }
+function fbToStore(s){
+  const sec=s.querySelector('section.fb'); if(!sec) return;
+  const sm=sec.querySelector(':scope > small'); if(sm) sm.innerHTML='게임을 써 보신 선생님들의 의견을 받아요. <b>보내기</b>를 누르면 바로 제작자에게 전달돼요.';
+  const dev=fbDevice(); sec.querySelectorAll('.fbdev b').forEach(b=>b.textContent=dev);
+  const m=sec.querySelector('#fbm');
+  sec.querySelectorAll('.fbc').forEach(c=>{ c.querySelector('.fbgo').onclick=async()=>{
+    const t=c.querySelector('.fbt').value.trim();
+    if(!t){ m.className='msg bad'; m.textContent='의견을 한 줄 이상 써 주세요.'; c.querySelector('.fbt').focus(); return; }
+    m.className='msg'; m.textContent='보내는 중…';
+    try{ const {db,FV}=await fbReady(); const k=c.dataset.k;
+      await db.collection('fb').add({kind:k==='기술 지원'?'기술 지원':'내용', lesson:String(c.querySelector('.fbl').value).slice(0,80), text:t.slice(0,1000),
+        who:String(sec.querySelector('.fbn').value||'').trim().slice(0,60), dev:k==='기술 지원'?dev.slice(0,120):'', at:FV.serverTimestamp()});
+      c.querySelector('.fbt').value=''; m.className='msg ok'; m.textContent='보냈어요. 고맙습니다! 답장이 필요하면 이름·학교를 적어 주신 분께 인디스쿨로 연락드릴게요.';
+    }catch(e){ m.className='msg bad'; m.textContent='보내지 못했어요. '+(netErr(e)||'잠시 뒤 다시 눌러 주세요.'); } }; });
+}
 const _openSettings=openSettings;
 /* 선생님 설정 잠금(11-05): 학생이 설정을 열지 못하게. SET_HASH = sha256('tt-set:'+비밀번호), build_hub.py가 채움(없으면 잠금 없음) */
 const SET_HASH='6ef33996c11b09fcf4992ffea2e96cfac857d43b8d33e6bcab7bb8f30939f9fe';
 let _setOK=(()=>{ try{ return sessionStorage.getItem(RKEY+'setok')==='1'; }catch(e){ return false; } })();
-function openSettingsReal(){ _openSettings(); const s=document.getElementById('sheet'); if(s) roomSettings(s); }
+function openSettingsReal(){ _openSettings(); const s=document.getElementById('sheet'); if(s){ roomSettings(s); fbToStore(s); } }
 openSettings=function(){
   if(_setOK||!/^[0-9a-f]{64}$/.test(SET_HASH)) return openSettingsReal();
   const w=document.createElement('div'); w.className='sheet'; w.id='setlock';

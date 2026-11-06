@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>관리실 · 오늘의 시간 여행</title>
+<style>
+:root{--bg:#f6f3ec;--card:#fff;--ink:#231d12;--muted:#6b6352;--line:#e2dccd;--acc:#2f6b4a;--acc2:#c9902b;--bad:#b3412e;--bar1:#c9902b;--bar2:#2f6b4a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171c;--card:#1f2229;--ink:#ece6d8;--muted:#a59d8a;--line:#343844;--acc:#5fbf8b;--acc2:#e0b84f;--bad:#e8735d;--bar1:#e0b84f;--bar2:#5fbf8b}}
+:root[data-theme="dark"]{--bg:#15171c;--card:#1f2229;--ink:#ece6d8;--muted:#a59d8a;--line:#343844;--acc:#5fbf8b;--acc2:#e0b84f;--bad:#e8735d;--bar1:#e0b84f;--bar2:#5fbf8b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;margin:0}h1 small{font-size:13px;color:var(--muted);font-weight:500;margin-left:6px}
+button{font:inherit;cursor:pointer}
+.btn{padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 16px}
+.tabs button{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.tile b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.tile span{color:var(--muted);font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.seg button{border:0;background:var(--card);color:var(--ink);padding:6px 12px}.seg button[aria-pressed="true"]{background:var(--acc);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:13px}td.n{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted);margin:4px 0 6px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+svg text{fill:var(--muted);font-size:11px}
+.muted{color:var(--muted)}.bad{color:var(--bad)}
+.fbi{border-bottom:1px solid var(--line);padding:10px 0}.fbi:last-child{border-bottom:0}
+.fbi .h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
+.fbi .tag{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--acc);color:#fff}.fbi .tag.t{background:var(--acc2);color:#231d12}
+.fbi p{margin:6px 0 0;white-space:pre-wrap}
+.login{max-width:420px;margin:60px auto;text-align:center}
+.login p{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🗝 관리실 <small>오늘의 시간 여행</small></h1>
+    <div id="who"></div>
+  </header>
+  <div id="app"><div class="login card"><h2>제작자 전용</h2><p>제작자 Google 계정으로 들어가면 이용 현황·반 현황·받은 의견을 볼 수 있어요.<br>다른 계정으로는 아무것도 보이지 않아요.</p><button class="btn p" id="gin" type="button">Google 계정으로 들어가기</button><p class="bad" id="lm"></p></div></div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const FBCFG=JSON.parse('{"apiKey":"AIzaSyCYxuQAFxjxQ9yGzH_9SN7KZuw6ZTPSq7k","authDomain":"timetravel-52.firebaseapp.com","projectId":"timetravel-52","storageBucket":"timetravel-52.firebasestorage.app","messagingSenderId":"195255206485","appId":"1:195255206485:web:3ff5ef5a54c897a2df0adc"}');
+firebase.initializeApp(FBCFG);
+const au=firebase.auth(), db=firebase.firestore();
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let T=[],CH=[];
+fetch('./index.html',{cache:'no-store'}).then(r=>r.text()).then(h=>{ const a=h.match(/const T=(\[[^\]]*\])/), b=h.match(/const CH=(\[[^\]]*\])/);
+  try{ if(a) T=Function('return '+a[1])(); if(b) CH=Function('return '+b[1])(); }catch(_){} }).catch(()=>{});
+const lname=n=>(CH[n-1]?CH[n-1]+'차시 ':n+'번 ')+(T[n-1]||'');
+const kday=(ms)=>new Date((ms??Date.now())+9*36e5).toISOString().slice(0,10);
+$('#gin').onclick=()=>{ const p=new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
+  au.signInWithPopup(p).catch(e=>{ if(/popup/.test(e.code)) au.signInWithRedirect(p); else $('#lm').textContent='들어가지 못했어요: '+e.code; }); };
+au.onAuthStateChanged(async u=>{
+  if(!u||u.isAnonymous){ $('#who').innerHTML=''; return; }
+  $('#who').innerHTML=`<span class="muted">${esc(u.email||'')}</span> <button class="btn" id="out" type="button">나가기</button>`;
+  $('#out').onclick=()=>au.signOut().then(()=>location.reload());
+  try{ await db.collection('stats').limit(1).get(); }catch(e){ $('#app').innerHTML=`<div class="login card"><h2>이 계정으로는 볼 수 없어요</h2><p>제작자 Google 계정으로 다시 들어가 주세요.</p><button class="btn" id="out2" type="button">다른 계정으로</button></div>`; $('#out2').onclick=()=>au.signOut().then(()=>location.reload()); return; }
+  shell();
+});
+let tab='use';
+function shell(){
+  $('#app').innerHTML=`<div class="tabs" role="tablist"><button data-t="use">📈 이용 현황</button><button data-t="rooms">🏫 우리 반 현황</button><button data-t="fb">💬 받은 의견</button></div><div id="pane"></div>`;
+  document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ tab=b.dataset.t; paint(); }); paint(); }
+function paint(){ document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===tab)); const p=$('#pane'); p.innerHTML='<p class="muted">불러오는 중…</p>';
+  ({use:useTab,rooms:roomTab,fb:fbTab})[tab](p).catch(e=>p.innerHTML=`<p class="bad">불러오지 못했어요: ${esc(e.code||e.message)}</p>`); }
+
+/* 📈 이용 현황 */
+let range=30;
+async function useTab(p){
+  const qs=await db.collection('stats').get(); const days={}; qs.forEach(d=>days[d.id]=d.data());
+  const ids=Object.keys(days).sort(); const today=kday();
+  const inRange=id=>range===0||id>kday(Date.now()-(range-1)*864e5);
+  const sum=(f,keys)=>keys.reduce((a,id)=>a+Object.entries(days[id]).filter(([k])=>f(k)).reduce((x,[,v])=>x+(+v||0),0),0);
+  const sel=ids.filter(inRange);
+  const ts=sum(k=>/^t\d+s$/.test(k),sel), td=sum(k=>/^t\d+d$/.test(k),sel), qs_=sum(k=>/^q\d+s$/.test(k),sel), qd=sum(k=>/^q\d+d$/.test(k),sel), rs=sum(k=>k==='rs',sel);
+  const pct=(a,b)=>b?Math.round(a/b*100)+'%':'-';
+  /* 차시별 */
+  const L={}; sel.forEach(id=>Object.entries(days[id]).forEach(([k,v])=>{ const m=k.match(/^([tq])(\d+)([sd])$/); if(!m) return; const o=L[m[2]]||(L[m[2]]={ts:0,td:0,qs:0,qd:0}); o[m[1]+m[3]]+=+v||0; }));
+  const rows=Object.entries(L).sort((a,b)=>(b[1].ts+b[1].qs)-(a[1].ts+a[1].qs));
+  /* 날짜 막대(최근 30일) */
+  const N=30, xs=[...Array(N)].map((_,i)=>kday(Date.now()-(N-1-i)*864e5));
+  const vS=xs.map(id=>days[id]?sum(k=>/^[tq]\d+s$/.test(k),[id]):0), vD=xs.map(id=>days[id]?sum(k=>/^[tq]\d+d$/.test(k),[id]):0);
+  const mx=Math.max(4,...vS,...vD), W=Math.max(600,N*26), H=170, bw=(W-40)/N;
+  const ticks=[0,Math.round(mx/2),mx];
+  const svg=`<svg viewBox="0 0 ${W} ${H+24}" width="100%" role="img" aria-label="최근 30일 시작·끝낸 횟수">
+    ${ticks.map(t=>`<line x1="34" x2="${W}" y1="${H-t/mx*H+4}" y2="${H-t/mx*H+4}" stroke="var(--line)"/><text x="28" y="${H-t/mx*H+8}" text-anchor="end">${t}</text>`).join('')}
+    ${xs.map((id,i)=>{ const x=36+i*bw, h1=vS[i]/mx*H, h2=vD[i]/mx*H;
+      return `<g><title>${id} · 시작 ${vS[i]} · 끝냄 ${vD[i]}</title><rect x="${x}" y="${H-h1+4}" width="${bw*0.42}" height="${h1}" rx="2" fill="var(--bar1)"/><rect x="${x+bw*0.45}" y="${H-h2+4}" width="${bw*0.42}" height="${h2}" rx="2" fill="var(--bar2)"/>${i%5===4||i===N-1?`<text x="${x+bw*0.45}" y="${H+20}" text-anchor="middle">${id.slice(5).replace('-','/')}</text>`:''}</g>`; }).join('')}</svg>`;
+  p.innerHTML=`<div class="seg" role="group" aria-label="기간">${[[7,'최근 7일'],[30,'최근 30일'],[0,'전체']].map(([v,t])=>`<button data-r="${v}" aria-pressed="${range===v}">${t}</button>`).join('')}</div>
+  <div class="tiles">
+    <div class="tile"><b>${ts.toLocaleString()}</b><span>시간 여행 시작</span></div>
+    <div class="tile"><b>${td.toLocaleString()}</b><span>시간 여행 끝냄 · ${pct(td,ts)}</span></div>
+    <div class="tile"><b>${qd.toLocaleString()}</b><span>귀환 퀴즈 끝냄 · 시작 ${qs_.toLocaleString()}</span></div>
+    <div class="tile"><b>${rs.toLocaleString()}</b><span>반 코드로 보낸 결과</span></div>
+  </div>
+  <div class="card"><h2>최근 30일</h2><div class="legend"><span><i style="background:var(--bar1)"></i>시작(시간 여행+귀환 퀴즈)</span><span><i style="background:var(--bar2)"></i>끝냄</span></div><div class="scroll">${svg}</div>
+    <p class="muted" style="font-size:13px;margin:6px 0 0">같은 기기·같은 날·같은 차시는 한 번만 세요. 제작자 확인 모드는 세지 않아요. 누가·어느 반인지는 남기지 않아요.</p></div>
+  <div class="card"><h2>차시별 (${range?('최근 '+range+'일'):'전체'})</h2><div class="scroll"><table><thead><tr><th>차시</th><th class="n">시간 여행 시작</th><th class="n">끝냄</th><th class="n">끝낸 비율</th><th class="n">귀환 퀴즈 시작</th><th class="n">끝냄</th></tr></thead><tbody>
+    ${rows.length?rows.map(([n,o])=>`<tr><td>${esc(lname(+n))}</td><td class="n">${o.ts}</td><td class="n">${o.td}</td><td class="n">${pct(o.td,o.ts)}</td><td class="n">${o.qs}</td><td class="n">${o.qd}</td></tr>`).join(''):'<tr><td colspan="6" class="muted">아직 기록이 없어요.</td></tr>'}
+  </tbody></table></div></div>
+  <p class="muted" style="font-size:13px">기록 시작: ${ids[0]||'-'} · 오늘(${today}) 시작 ${days[today]?sum(k=>/^[tq]\d+s$/.test(k),[today]):0}회</p>`;
+  p.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ range=+b.dataset.r; paint(); });
+}
+/* 🏫 우리 반 현황: 반 이름·만든 날·결과 수·마지막 날 (학생 결과는 열지 않음) */
+async function roomTab(p){
+  const [rq,sq]=await Promise.all([db.collection('rooms').get(),db.collection('rstats').get()]);
+  const st={}; sq.forEach(d=>st[d.id]=d.data());
+  const list=rq.docs.map(d=>{ const x=d.data(), s=st[d.id]||{}; return {name:x.name, at:x.at&&x.at.toMillis?x.at.toMillis():0, n:s.n||0, last:s.last&&s.last.toMillis?s.last.toMillis():0}; })
+    .sort((a,b)=>(b.last||b.at)-(a.last||a.at));
+  const now=Date.now(), act=list.filter(r=>r.last&&now-r.last<7*864e5).length, act30=list.filter(r=>r.last&&now-r.last<30*864e5).length;
+  const f=ms=>ms?kday(ms):'-';
+  p.innerHTML=`<div class="tiles"><div class="tile"><b>${list.length}</b><span>만들어진 반</span></div><div class="tile"><b>${act}</b><span>최근 7일에 결과가 온 반</span></div><div class="tile"><b>${act30}</b><span>최근 30일에 결과가 온 반</span></div><div class="tile"><b>${list.reduce((a,r)=>a+r.n,0).toLocaleString()}</b><span>반으로 온 결과(누적)</span></div></div>
+  <div class="card"><h2>반 목록</h2><div class="scroll"><table><thead><tr><th>반 이름</th><th>만든 날</th><th class="n">받은 결과</th><th>마지막 결과</th></tr></thead><tbody>
+  ${list.length?list.map(r=>`<tr><td>${esc(r.name)}</td><td>${f(r.at)}</td><td class="n">${r.n}</td><td>${f(r.last)}</td></tr>`).join(''):'<tr><td colspan="4" class="muted">아직 만들어진 반이 없어요.</td></tr>'}
+  </tbody></table></div><p class="muted" style="font-size:13px;margin:8px 0 0">학생 결과(번호·점수)는 그 반 선생님만 볼 수 있어서 관리실에서도 열리지 않아요. 결과 수는 11월 6일부터 세요.</p></div>`;
+}
+/* 💬 받은 의견 */
+async function fbTab(p){
+  const qs=await db.collection('fb').orderBy('at','desc').limit(200).get();
+  p.innerHTML=`<div class="card"><h2>받은 의견 ${qs.size}개</h2>${qs.size?qs.docs.map(d=>{ const x=d.data(); return `<div class="fbi"><div class="h"><span class="tag ${x.kind==='기술 지원'?'t':''}">${esc(x.kind)}</span><span>${esc(x.lesson)}</span><span>${x.at&&x.at.toMillis?new Date(x.at.toMillis()).toLocaleString('ko-KR'):''}</span>${x.who?`<span>· ${esc(x.who)}</span>`:''}<button class="btn" data-del="${d.id}" type="button" style="margin-left:auto;padding:3px 10px">지우기</button></div><p>${esc(x.text)}</p>${x.dev?`<div class="muted" style="font-size:12px;margin-top:4px">${esc(x.dev)}</div>`:''}</div>`; }).join(''):'<p class="muted">아직 받은 의견이 없어요.</p>'}</div>
+  <p class="muted" style="font-size:13px">선생님 설정 맨 아래 「제작자에게 의견 보내기」로 온 글이에요. 11월 6일 전에 온 의견은 예전 구글 설문지에 있어요.</p>`;
+  p.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{ b.disabled=true; try{ await db.collection('fb').doc(b.dataset.del).delete(); b.closest('.fbi').remove(); }catch(e){ b.disabled=false; b.textContent='못 지움'; } });
+}
+</script>
+</body>
+</html>
