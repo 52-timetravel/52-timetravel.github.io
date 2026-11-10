@@ -314,6 +314,15 @@ body{background:var(--bg);color:var(--fg)}
 .ana .tabs button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:#fff}
 .ana textarea{background:#fff}
 .sheet{background:rgba(42,33,24,.55)}
+/* 공지 띠 (11-10) */
+.hj-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px 12px 16px;background:#FBEFD2;border:1px solid #E8C989;border-radius:14px;color:#4A3A22}
+.hj-note .ic{font-size:22px;flex:none}
+.hj-note p{flex:1 1 420px;margin:0;font-size:15px;line-height:1.6}
+.hj-note p b{color:#2A2118}
+.hj-note .go{flex:none;border:0;border-radius:10px;background:var(--gold);color:#fff;font:inherit;font-size:15px;font-weight:700;padding:9px 14px;cursor:pointer}
+.hj-note .go:hover{filter:brightness(1.06)}
+.hj-note .x{flex:none;border:0;background:transparent;color:#8A7A5E;font-size:24px;line-height:1;width:36px;height:36px;border-radius:8px;cursor:pointer}
+.hj-note .x:hover{background:#F3E2BC;color:#4A3A22}
 </style>
 
 <div class="wrap" id="home">
@@ -765,6 +774,19 @@ document.getElementById('jin').addEventListener('keydown',e=>{ if(e.key==='Enter
     <div><i style="background:#D4E7E3;color:#1E4A45">2</i><span><b>배워보기</b>수업 시간, 헷갈린 것부터 선생님과</span></div>
     <div><i style="background:#F4E6C5;color:#7A5A1C">3</i><span><b>돌아오기</b>수업 뒤, 귀환 퀴즈로 스스로 확인해요</span></div>`;
   hdr.replaceWith(top); flow.replaceWith(f2); top.insertAdjacentElement('afterend',hero);
+  /* 공지 띠 (11-10): 선생님께 의견 부탁. 문구를 바꾸면 NOTE_ID도 바꿔야 닫았던 기기에도 다시 떠요. 공지를 내리려면 NOTE_ON=false */
+  const NOTE_ON=true, NOTE_ID='tt-note-2026-11-fb';
+  let noteOff=false; try{ noteOff=localStorage.getItem(NOTE_ID)==='x'; }catch(_){}
+  if(NOTE_ON&&!noteOff){
+    const nt=document.createElement('div'); nt.className='hj-note'; nt.setAttribute('role','note');
+    nt.innerHTML=`<span class="ic" aria-hidden="true">📮</span>
+      <p><b>선생님, 「오늘의 시간 여행」 잘 쓰고 계신가요?</b> 아직 다듬어 가는 중이라 선생님들의 의견이 꼭 필요해요. 칭찬도, 불편한 점도, 한 줄이라도 좋아요. <b>선생님 설정 → 제작자에게 의견 보내기</b>로 보내 주세요.</p>
+      <button type="button" class="go">의견 보내러 가기</button>
+      <button type="button" class="x" aria-label="공지 닫기">×</button>`;
+    nt.querySelector('.x').onclick=()=>{ nt.remove(); try{ localStorage.setItem(NOTE_ID,'x'); }catch(_){} };
+    nt.querySelector('.go').onclick=()=>{ openSettings(); let n=0; const t=setInterval(()=>{ const f=document.querySelector('#sheet section.fb'); if(f){ clearInterval(t); f.scrollIntoView({behavior:'smooth',block:'start'}); } else if(++n>240) clearInterval(t); },250); };
+    top.insertAdjacentElement('afterend',nt);
+  }
 
   /* 차시 카드 */
   draw=function(){
